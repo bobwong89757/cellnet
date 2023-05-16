@@ -11,7 +11,8 @@ import (
 	"github.com/bobwong89757/cellnet/util"
 )
 
-// 接受器
+// tcpAcceptor
+// @Description: TCP消息接收器
 type tcpAcceptor struct {
 	peer.SessionManager
 	peer.CorePeerProperty
@@ -25,6 +26,11 @@ type tcpAcceptor struct {
 	listener net.Listener
 }
 
+// Port
+//
+//	@Description: 获取端口
+//	@receiver self
+//	@return int
 func (self *tcpAcceptor) Port() int {
 	if self.listener == nil {
 		return 0
@@ -33,12 +39,21 @@ func (self *tcpAcceptor) Port() int {
 	return self.listener.Addr().(*net.TCPAddr).Port
 }
 
+// IsReady
+//
+//	@Description: 检查是否准备好
+//	@receiver self
+//	@return bool
 func (self *tcpAcceptor) IsReady() bool {
 
 	return self.IsRunning()
 }
 
-// 异步开始侦听
+// Start
+//
+//	@Description: 异步开始侦听
+//	@receiver self
+//	@return cellnet.Peer
 func (self *tcpAcceptor) Start() cellnet.Peer {
 
 	self.WaitStopFinished()

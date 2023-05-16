@@ -5,11 +5,18 @@ import (
 	"github.com/bobwong89757/cellnet/log"
 )
 
-// 萃取消息中的消息
+// PacketMessagePeeker
+// @Description: 萃取消息中的内容
 type PacketMessagePeeker interface {
 	Message() interface{}
 }
 
+// WriteRecvLogger
+//
+//	@Description: 写入接收日志
+//	@param protocol
+//	@param ses
+//	@param msg
 func WriteRecvLogger(protocol string, ses cellnet.Session, msg interface{}) {
 
 	if peeker, ok := msg.(PacketMessagePeeker); ok {
@@ -30,6 +37,12 @@ func WriteRecvLogger(protocol string, ses cellnet.Session, msg interface{}) {
 
 }
 
+// WriteSendLogger
+//
+//	@Description: 写入发送日志
+//	@param protocol
+//	@param ses
+//	@param msg
 func WriteSendLogger(protocol string, ses cellnet.Session, msg interface{}) {
 
 	if peeker, ok := msg.(PacketMessagePeeker); ok {

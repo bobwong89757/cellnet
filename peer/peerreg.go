@@ -10,7 +10,10 @@ type PeerCreateFunc func() cellnet.Peer
 
 var peerByName = map[string]PeerCreateFunc{}
 
-// 注册Peer创建器
+// RegisterPeerCreator
+//
+//	@Description: 注册Peer创建器
+//	@param f
 func RegisterPeerCreator(f PeerCreateFunc) {
 
 	// 临时实例化一个，获取类型
@@ -23,7 +26,10 @@ func RegisterPeerCreator(f PeerCreateFunc) {
 	peerByName[dummyPeer.TypeName()] = f
 }
 
-// Peer创建器列表
+// PeerCreatorList
+//
+//	@Description: 获取Peer创建器列表
+//	@return ret
 func PeerCreatorList() (ret []string) {
 
 	for name := range peerByName {
@@ -34,7 +40,11 @@ func PeerCreatorList() (ret []string) {
 	return
 }
 
-// cellnet自带的peer对应包
+// getPackageByPeerName
+//
+//	@Description: cellnet自带的peer对应包
+//	@param name
+//	@return string
 func getPackageByPeerName(name string) string {
 	switch name {
 	case "tcp.Connector", "tcp.Acceptor", "tcp.SyncConnector":
@@ -56,7 +66,11 @@ func getPackageByPeerName(name string) string {
 	}
 }
 
-// 创建一个Peer
+// NewPeer
+//
+//	@Description: 创建一个Peer
+//	@param peerType
+//	@return cellnet.Peer
 func NewPeer(peerType string) cellnet.Peer {
 	peerCreator := peerByName[peerType]
 	if peerCreator == nil {
@@ -68,7 +82,14 @@ func NewPeer(peerType string) cellnet.Peer {
 	return peerCreator()
 }
 
-// 创建Peer后，设置基本属性
+// NewGenericPeer
+//
+//	@Description: 创建Peer并设置基本属性
+//	@param peerType
+//	@param name
+//	@param addr
+//	@param q
+//	@return cellnet.GenericPeer
 func NewGenericPeer(peerType, name, addr string, q cellnet.EventQueue) cellnet.GenericPeer {
 
 	p := NewPeer(peerType)

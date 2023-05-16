@@ -4,7 +4,14 @@ import (
 	"github.com/bobwong89757/cellnet"
 )
 
-// 编码消息, 在使用了带内存池的codec中，可以传入session或peer的ContextSet，保存内存池上下文，默认ctx传nil
+// EncodeMessage
+//
+//	@Description: 编码消息, 在使用了带内存池的codec中，可以传入session或peer的ContextSet，保存内存池上下文，默认ctx传nil
+//	@param msg
+//	@param ctx
+//	@return data
+//	@return meta
+//	@return err
 func EncodeMessage(msg interface{}, ctx cellnet.ContextSet) (data []byte, meta *cellnet.MessageMeta, err error) {
 
 	// 获取消息元信息
@@ -26,7 +33,14 @@ func EncodeMessage(msg interface{}, ctx cellnet.ContextSet) (data []byte, meta *
 	return
 }
 
-// 解码消息
+// DecodeMessage
+//
+//	@Description: 解码消息
+//	@param msgid
+//	@param data
+//	@return interface{}
+//	@return *cellnet.MessageMeta
+//	@return error
 func DecodeMessage(msgid int, data []byte) (interface{}, *cellnet.MessageMeta, error) {
 
 	// 获取消息元信息
@@ -50,11 +64,18 @@ func DecodeMessage(msgid int, data []byte) (interface{}, *cellnet.MessageMeta, e
 	return msg, meta, nil
 }
 
-// Codec.Encode内分配的资源，在必要时可以回收，例如内存池对象
+// CodecRecycler
+// @Description: Codec.Encode内分配的资源，在必要时可以回收，例如内存池对象
 type CodecRecycler interface {
 	Free(data interface{}, ctx cellnet.ContextSet)
 }
 
+// FreeCodecResource
+//
+//	@Description: Codec中使用内存池时的释放位置
+//	@param codec
+//	@param data
+//	@param ctx
 func FreeCodecResource(codec cellnet.Codec, data interface{}, ctx cellnet.ContextSet) {
 
 	if codec == nil {

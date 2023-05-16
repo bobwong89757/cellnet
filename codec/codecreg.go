@@ -7,7 +7,10 @@ import (
 
 var registedCodecs []cellnet.Codec
 
-// 注册编码器
+// RegisterCodec
+//
+//	@Description: 注册编码器
+//	@param c
 func RegisterCodec(c cellnet.Codec) {
 
 	if GetCodec(c.Name()) != nil {
@@ -17,7 +20,11 @@ func RegisterCodec(c cellnet.Codec) {
 	registedCodecs = append(registedCodecs, c)
 }
 
-// 获取编码器
+// GetCodec
+//
+//	@Description: 获取编码器
+//	@param name
+//	@return cellnet.Codec
 func GetCodec(name string) cellnet.Codec {
 
 	for _, c := range registedCodecs {
@@ -29,7 +36,11 @@ func GetCodec(name string) cellnet.Codec {
 	return nil
 }
 
-// cellnet自带的编码对应包
+// getPackageByCodecName
+//
+//	@Description: cellnet自带的编码对应包
+//	@param name
+//	@return string
 func getPackageByCodecName(name string) string {
 	switch name {
 	case "binary":
@@ -47,7 +58,11 @@ func getPackageByCodecName(name string) string {
 	}
 }
 
-// 指定编码器不存在时，报错
+// MustGetCodec
+//
+//	@Description: 指定编码器不存在时，报错
+//	@param name
+//	@return cellnet.Codec
 func MustGetCodec(name string) cellnet.Codec {
 	codec := GetCodec(name)
 

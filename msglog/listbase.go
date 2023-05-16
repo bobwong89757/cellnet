@@ -42,21 +42,32 @@ const (
 	MsgLogMode_WhiteList
 )
 
-// 设置当前的消息日志处理模式
+// SetCurrMsgLogMode
+//
+//	@Description: 设置当前的消息日志处理模式
+//	@param mode
 func SetCurrMsgLogMode(mode MsgLogMode) {
 	currMsgLogModeGuard.Lock()
 	currMsgLogMode = mode
 	currMsgLogModeGuard.Unlock()
 }
 
-// 获取当前的消息日志处理模式
+// GetCurrMsgLogMode
+//
+//	@Description: 获取当前的消息日志处理模式
+//	@return MsgLogMode
 func GetCurrMsgLogMode() MsgLogMode {
 	currMsgLogModeGuard.RLock()
 	defer currMsgLogModeGuard.RUnlock()
 	return currMsgLogMode
 }
 
-// 指定某个消息的处理规则, 消息格式: packageName.MsgName
+// SetMsgLogRule
+//
+//	@Description: 指定某个消息的处理规则, 消息格式: packageName.MsgName
+//	@param name
+//	@param rule
+//	@return error
 func SetMsgLogRule(name string, rule MsgLogRule) error {
 
 	meta := cellnet.MessageMetaByFullName(name)
@@ -77,7 +88,11 @@ func SetMsgLogRule(name string, rule MsgLogRule) error {
 	return nil
 }
 
-// 能否显示消息日志
+// IsMsgLogValid
+//
+//	@Description: 能否显示消息日志
+//	@param msgid
+//	@return bool
 func IsMsgLogValid(msgid int) bool {
 	switch GetCurrMsgLogMode() {
 	case MsgLogMode_BlackList: // 黑名单里不显示
@@ -100,7 +115,11 @@ func IsMsgLogValid(msgid int) bool {
 	return true
 }
 
-// 遍历消息规则
+// VisitMsgLogRule
+//
+//	@Description: 遍历消息规则
+//	@param mode
+//	@param callback
 func VisitMsgLogRule(mode MsgLogMode, callback func(*cellnet.MessageMeta) bool) {
 
 	switch mode {

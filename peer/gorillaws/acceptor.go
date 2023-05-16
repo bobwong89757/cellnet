@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+// wsAcceptor
+// @Description: websocket接收器
 type wsAcceptor struct {
 	peer.CoreSessionManager
 	peer.CorePeerProperty

@@ -10,12 +10,20 @@ type ctx struct {
 	value interface{}
 }
 
-// 上下文记录，绑定用户自定义数据
+// CoreContextSet
+// @Description: 上下文记录，绑定用户自定义数据
 type CoreContextSet struct {
 	ctxes      []ctx
 	ctxesGuard sync.RWMutex
 }
 
+// FetchContext
+//
+//	@Description: 匹配上下文内容的类型
+//	@receiver self
+//	@param key
+//	@param valuePtr
+//	@return bool
 func (self *CoreContextSet) FetchContext(key, valuePtr interface{}) bool {
 
 	pv, ok := self.GetContext(key)
@@ -61,6 +69,13 @@ func (self *CoreContextSet) FetchContext(key, valuePtr interface{}) bool {
 	return true
 }
 
+// GetContext
+//
+//	@Description: 获取上下文内容
+//	@receiver self
+//	@param key
+//	@return interface{}
+//	@return bool
 func (self *CoreContextSet) GetContext(key interface{}) (interface{}, bool) {
 
 	self.ctxesGuard.RLock()
@@ -75,6 +90,12 @@ func (self *CoreContextSet) GetContext(key interface{}) (interface{}, bool) {
 	return nil, false
 }
 
+// SetContext
+//
+//	@Description: 设置上下文内容
+//	@receiver self
+//	@param key
+//	@param v
 func (self *CoreContextSet) SetContext(key, v interface{}) {
 
 	self.ctxesGuard.Lock()

@@ -84,6 +84,11 @@ func (self *tcpAcceptor) Start() cellnet.Peer {
 	return self
 }
 
+// ListenAddress
+//
+//	@Description: 监听地址
+//	@receiver self
+//	@return string
 func (self *tcpAcceptor) ListenAddress() string {
 
 	pos := strings.Index(self.Address(), ":")
@@ -96,6 +101,10 @@ func (self *tcpAcceptor) ListenAddress() string {
 	return util.JoinAddress(host, self.Port())
 }
 
+// accept
+//
+//	@Description: 开始侦听
+//	@receiver self
 func (self *tcpAcceptor) accept() {
 	self.SetRunning(true)
 
@@ -129,6 +138,11 @@ func (self *tcpAcceptor) accept() {
 
 }
 
+// onNewSession
+//
+//	@Description: 新会话钩子
+//	@receiver self
+//	@param conn
 func (self *tcpAcceptor) onNewSession(conn net.Conn) {
 
 	self.ApplySocketOption(conn)
@@ -143,7 +157,10 @@ func (self *tcpAcceptor) onNewSession(conn net.Conn) {
 	})
 }
 
-// 停止侦听器
+// Stop
+//
+//	@Description: 停止侦听器
+//	@receiver self
 func (self *tcpAcceptor) Stop() {
 	if !self.IsRunning() {
 		return
@@ -164,12 +181,20 @@ func (self *tcpAcceptor) Stop() {
 	self.WaitStopFinished()
 }
 
+// TypeName
+//
+//	@Description: 名称
+//	@receiver self
+//	@return string
 func (self *tcpAcceptor) TypeName() string {
 	return "tcp.Acceptor"
 }
 
+// init
+//
+//	@Description: 自动执行的init
 func init() {
-
+	//  注册端
 	peer.RegisterPeerCreator(func() cellnet.Peer {
 		p := &tcpAcceptor{
 			SessionManager: new(peer.CoreSessionManager),

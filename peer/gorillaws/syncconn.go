@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+// wsSyncConnector
+// @Description: ws同步连接器
 type wsSyncConnector struct {
 	peer.SessionManager
 

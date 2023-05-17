@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+// httpAcceptor
+// @Description: http接收器
 type httpAcceptor struct {
 	peer.CorePeerProperty
 	peer.CoreProcBundle
@@ -175,6 +177,10 @@ OnError:
 
 // 停止侦听器
 func (self *httpAcceptor) Stop() {
+
+	if self.sv == nil {
+		return
+	}
 
 	if err := self.sv.Shutdown(nil); err != nil {
 		log.GetLog().Error("#http.stop failed(%s) %v", self.Name(), err.Error())

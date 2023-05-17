@@ -11,6 +11,8 @@ import (
 
 const MaxUDPRecvBuffer = 2048
 
+// udpAcceptor
+// @Description: UDP侦听器
 type udpAcceptor struct {
 	peer.CoreSessionManager
 	peer.CorePeerProperty
@@ -18,7 +20,7 @@ type udpAcceptor struct {
 	peer.CoreRunningTag
 	peer.CoreProcBundle
 	peer.CoreCaptureIOPanic
-
+	// UDP连接
 	conn *net.UDPConn
 
 	sesTimeout       time.Duration

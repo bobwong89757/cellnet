@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-// Socket会话
+// tcpSession
+// @Description: Socket会话
 type tcpSession struct {
 	peer.CoreContextSet
 	peer.CoreSessionIdentify
@@ -36,27 +37,50 @@ type tcpSession struct {
 	closing int64
 }
 
+// setConn
+//
+//	@Description: 设置连接
+//	@receiver self
+//	@param conn
 func (self *tcpSession) setConn(conn net.Conn) {
 	self.connGuard.Lock()
 	self.conn = conn
 	self.connGuard.Unlock()
 }
 
+// Conn
+//
+//	@Description: 连接
+//	@receiver self
+//	@return net.Conn
 func (self *tcpSession) Conn() net.Conn {
 	self.connGuard.RLock()
 	defer self.connGuard.RUnlock()
 	return self.conn
 }
 
+// Peer
+//
+//	@Description: 获取端
+//	@receiver self
+//	@return cellnet.Peer
 func (self *tcpSession) Peer() cellnet.Peer {
 	return self.pInterface
 }
 
-// 取原始连接
+// Raw
+//
+//	@Description: 取原始连接
+//	@receiver self
+//	@return interface{}
 func (self *tcpSession) Raw() interface{} {
 	return self.Conn()
 }
 
+// Close
+//
+//	@Description: 关闭连接器
+//	@receiver self
 func (self *tcpSession) Close() {
 
 	closing := atomic.SwapInt64(&self.closing, 1)
@@ -76,7 +100,11 @@ func (self *tcpSession) Close() {
 	}
 }
 
-// 发送封包
+// Send
+//
+//	@Description: 发送封包
+//	@receiver self
+//	@param msg
 func (self *tcpSession) Send(msg interface{}) {
 
 	// 只能通过Close关闭连接
@@ -92,10 +120,21 @@ func (self *tcpSession) Send(msg interface{}) {
 	self.sendQueue.Add(msg)
 }
 
+// IsManualClosed
+//
+//	@Description: 是否手动关闭
+//	@receiver self
+//	@return bool
 func (self *tcpSession) IsManualClosed() bool {
 	return atomic.LoadInt64(&self.closing) != 0
 }
 
+// protectedReadMessage
+//
+//	@Description: 读取消息
+//	@receiver self
+//	@return msg
+//	@return err
 func (self *tcpSession) protectedReadMessage() (msg interface{}, err error) {
 
 	defer func() {
@@ -112,7 +151,10 @@ func (self *tcpSession) protectedReadMessage() (msg interface{}, err error) {
 	return
 }
 
-// 接收循环
+// recvLoop
+//
+//	@Description: 接收循环
+//	@receiver self
 func (self *tcpSession) recvLoop() {
 
 	var capturePanic bool
@@ -134,7 +176,16 @@ func (self *tcpSession) recvLoop() {
 
 		if err != nil {
 			if !util.IsEOFOrNetReadError(err) {
-				log.GetLog().Error("session closed, sesid: %d, err: %s", self.ID(), err)
+
+				var ip string
+				if self.conn != nil {
+					addr := self.conn.RemoteAddr()
+					if addr != nil {
+						ip = addr.String()
+					}
+				}
+
+				log.GetLog().Error("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
 			}
 
 			self.sendQueue.Add(nil)
@@ -156,10 +207,28 @@ func (self *tcpSession) recvLoop() {
 	self.exitSync.Done()
 }
 
+func (self *tcpSession) protectedSendMessage(ev cellnet.Event) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.GetLog().Error("IO send panic: %s %s", err, cellnet.MessageToName(ev.Message()))
+		}
+
+	}()
+
+	self.SendMessage(ev)
+}
+
 // 发送循环
 func (self *tcpSession) sendLoop() {
 
 	var writeList []interface{}
+
+	var capturePanic bool
+
+	if i, ok := self.Peer().(cellnet.PeerCaptureIOPanic); ok {
+		capturePanic = i.CaptureIOPanic()
+	}
 
 	for {
 		writeList = writeList[0:0]
@@ -168,7 +237,11 @@ func (self *tcpSession) sendLoop() {
 		// 遍历要发送的数据
 		for _, msg := range writeList {
 
-			self.SendMessage(&cellnet.SendMsgEvent{Ses: self, Msg: msg})
+			if capturePanic {
+				self.protectedSendMessage(&cellnet.SendMsgEvent{Ses: self, Msg: msg})
+			} else {
+				self.SendMessage(&cellnet.SendMsgEvent{Ses: self, Msg: msg})
+			}
 		}
 
 		if exit {
@@ -186,7 +259,10 @@ func (self *tcpSession) sendLoop() {
 	self.exitSync.Done()
 }
 
-// 启动会话的各种资源
+// Start
+//
+//	@Description: 启动会话的各种资源
+//	@receiver self
 func (self *tcpSession) Start() {
 
 	atomic.StoreInt64(&self.closing, 0)
@@ -221,6 +297,13 @@ func (self *tcpSession) Start() {
 	go self.sendLoop()
 }
 
+// newSession
+//
+//	@Description: 新建会话
+//	@param conn
+//	@param p
+//	@param endNotify
+//	@return *tcpSession
 func newSession(conn net.Conn, p cellnet.Peer, endNotify func()) *tcpSession {
 	self := &tcpSession{
 		conn:       conn,

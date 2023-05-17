@@ -11,6 +11,8 @@ import (
 	"reflect"
 )
 
+// httpConnector
+// @Description: http连接器
 type httpConnector struct {
 	peer.CorePeerProperty
 	peer.CoreProcBundle

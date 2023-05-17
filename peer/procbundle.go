@@ -12,6 +12,8 @@ type MessagePoster interface {
 	ProcEvent(ev cellnet.Event)
 }
 
+// CoreProcBundle
+// @Description: 消息处理资源包
 type CoreProcBundle struct {
 	// 消息传输器
 	transmit cellnet.MessageTransmitter

@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+// tcpConnector
+// @Description: TCP连接器
 type tcpConnector struct {
 	peer.SessionManager
 
@@ -17,6 +19,7 @@ type tcpConnector struct {
 	peer.CoreRunningTag
 	peer.CoreProcBundle
 	peer.CoreTCPSocketOption
+	peer.CoreCaptureIOPanic
 
 	defaultSes *tcpSession
 
@@ -27,6 +30,11 @@ type tcpConnector struct {
 	reconDur time.Duration
 }
 
+// Start
+//
+//	@Description: 开始
+//	@receiver self
+//	@return cellnet.Peer
 func (self *tcpConnector) Start() cellnet.Peer {
 
 	self.WaitStopFinished()
@@ -40,14 +48,28 @@ func (self *tcpConnector) Start() cellnet.Peer {
 	return self
 }
 
+// Session
+//
+//	@Description: 获取当前会话
+//	@receiver self
+//	@return cellnet.Session
 func (self *tcpConnector) Session() cellnet.Session {
 	return self.defaultSes
 }
 
+// SetSessionManager
+//
+//	@Description: 设置会话管理器
+//	@receiver self
+//	@param raw
 func (self *tcpConnector) SetSessionManager(raw interface{}) {
 	self.SessionManager = raw.(peer.SessionManager)
 }
 
+// Stop
+//
+//	@Description: 停止连接器
+//	@receiver self
 func (self *tcpConnector) Stop() {
 	if !self.IsRunning() {
 		return
@@ -67,15 +89,30 @@ func (self *tcpConnector) Stop() {
 
 }
 
+// ReconnectDuration
+//
+//	@Description: 获取重连间隔
+//	@receiver self
+//	@return time.Duration
 func (self *tcpConnector) ReconnectDuration() time.Duration {
 
 	return self.reconDur
 }
 
+// SetReconnectDuration
+//
+//	@Description: 设置重连间隔
+//	@receiver self
+//	@param v
 func (self *tcpConnector) SetReconnectDuration(v time.Duration) {
 	self.reconDur = v
 }
 
+// Port
+//
+//	@Description: 连接端口号
+//	@receiver self
+//	@return int
 func (self *tcpConnector) Port() int {
 
 	conn := self.defaultSes.Conn()
@@ -89,7 +126,11 @@ func (self *tcpConnector) Port() int {
 
 const reportConnectFailedLimitTimes = 3
 
-// 连接器，传入连接地址和发送封包次数
+// connect
+//
+//	@Description: 连接器，传入连接地址和发送封包次数
+//	@receiver self
+//	@param address
 func (self *tcpConnector) connect(address string) {
 
 	self.SetRunning(true)
@@ -162,17 +203,27 @@ func (self *tcpConnector) connect(address string) {
 	self.EndStopping()
 }
 
+// IsReady
+//
+//	@Description: 是否准备好
+//	@receiver self
+//	@return bool
 func (self *tcpConnector) IsReady() bool {
 
 	return self.SessionCount() != 0
 }
 
+// TypeName
+//
+//	@Description: 获取名字
+//	@receiver self
+//	@return string
 func (self *tcpConnector) TypeName() string {
 	return "tcp.Connector"
 }
 
 func init() {
-
+	//  注册端
 	peer.RegisterPeerCreator(func() cellnet.Peer {
 		self := &tcpConnector{
 			SessionManager: new(peer.CoreSessionManager),

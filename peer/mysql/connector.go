@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// mysqlConnector
+// @Description: mysql连接器
 type mysqlConnector struct {
 	peer.CorePeerProperty
 	peer.CoreContextSet

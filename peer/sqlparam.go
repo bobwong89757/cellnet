@@ -1,5 +1,7 @@
 package peer
 
+// CoreSQLParameter
+// @Description: sql参数
 type CoreSQLParameter struct {
 	PoolConnCount int
 }

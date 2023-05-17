@@ -20,8 +20,16 @@ func (self *Pipe) Add(msg interface{}) {
 	self.listCond.Signal()
 }
 
+func (self *Pipe) Count() int {
+	self.listGuard.Lock()
+	defer self.listGuard.Unlock()
+	return len(self.list)
+}
+
 func (self *Pipe) Reset() {
+	self.listGuard.Lock()
 	self.list = self.list[0:0]
+	self.listGuard.Unlock()
 }
 
 // 如果没有数据，发生阻塞
@@ -33,9 +41,9 @@ func (self *Pipe) Pick(retList *[]interface{}) (exit bool) {
 		self.listCond.Wait()
 	}
 
-	self.listGuard.Unlock()
+// 	self.listGuard.Unlock()
 
-	self.listGuard.Lock()
+// 	self.listGuard.Lock()
 
 	// 复制出队列
 
@@ -49,7 +57,7 @@ func (self *Pipe) Pick(retList *[]interface{}) (exit bool) {
 		}
 	}
 
-	self.Reset()
+	self.list = self.list[0:0]
 	self.listGuard.Unlock()
 
 	return

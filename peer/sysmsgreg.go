@@ -8,6 +8,9 @@ import (
 	"reflect"
 )
 
+// init
+//
+//	@Description: 默认注册消息处理器
 func init() {
 	cellnet.RegisterMessageMeta(&cellnet.MessageMeta{
 		Codec: codec.MustGetCodec("binary"),

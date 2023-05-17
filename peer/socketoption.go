@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// CoreTCPSocketOption
+// @Description: socket选项
 type CoreTCPSocketOption struct {
 	readBufferSize  int
 	writeBufferSize int

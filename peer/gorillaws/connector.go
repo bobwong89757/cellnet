@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+// wsConnector
+// @Description: ws连接器
 type wsConnector struct {
 	peer.CoreSessionManager
 
@@ -20,6 +22,7 @@ type wsConnector struct {
 	peer.CoreContextSet
 	peer.CoreRunningTag
 	peer.CoreProcBundle
+	peer.CoreCaptureIOPanic
 
 	defaultSes *wsSession
 

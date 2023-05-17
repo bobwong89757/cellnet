@@ -7,12 +7,17 @@ import (
 
 const (
 	MTU       = 1472 // 最大传输单元
-	BodySize = 2    // 包体大小字段
-	MsgIDSize  = 2    // 消息ID字段
+	BodySize  = 2    // 包体大小字段
+	MsgIDSize = 2    // 消息ID字段
 )
 
+// RecvPacket
+//
+//	@Description: 解包, 2字节消息长度+2字节消息id+消息内容
+//	@param pktData
+//	@return msg
+//	@return err
 func RecvPacket(pktData []byte) (msg interface{}, err error) {
-
 
 	// 用小端格式读取Size
 	datasize := binary.LittleEndian.Uint16(pktData)
@@ -30,7 +35,7 @@ func RecvPacket(pktData []byte) (msg interface{}, err error) {
 	// 读取消息ID
 	msgid := binary.LittleEndian.Uint16(pktData[BodySize:])
 
-	msgData := pktData[BodySize + MsgIDSize:]
+	msgData := pktData[BodySize+MsgIDSize:]
 
 	// 将字节数组和消息ID用户解出消息
 	msg, _, err = codec.DecodeMessage(int(msgid), msgData)

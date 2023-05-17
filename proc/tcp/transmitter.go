@@ -7,6 +7,8 @@ import (
 	"net"
 )
 
+// TCPMessageTransmitter
+// @Description: TCP消息传输器
 type TCPMessageTransmitter struct {
 }
 
@@ -16,6 +18,13 @@ type socketOpt interface {
 	ApplySocketWriteTimeout(conn net.Conn, callback func())
 }
 
+// OnRecvMessage
+//
+//	@Description: 接收消息
+//	@receiver TCPMessageTransmitter
+//	@param ses
+//	@return msg
+//	@return err
 func (TCPMessageTransmitter) OnRecvMessage(ses cellnet.Session) (msg interface{}, err error) {
 
 	reader, ok := ses.Raw().(io.Reader)
@@ -40,6 +49,13 @@ func (TCPMessageTransmitter) OnRecvMessage(ses cellnet.Session) (msg interface{}
 	return
 }
 
+// OnSendMessage
+//
+//	@Description: 发送消息
+//	@receiver TCPMessageTransmitter
+//	@param ses
+//	@param msg
+//	@return err
 func (TCPMessageTransmitter) OnSendMessage(ses cellnet.Session, msg interface{}) (err error) {
 
 	writer, ok := ses.Raw().(io.Writer)

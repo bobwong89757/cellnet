@@ -42,7 +42,11 @@ func (self *RecvMsgEvent) Message() interface{} {
 	return self.Msg
 }
 
-// 消息原路返回
+// Reply
+//
+//	@Description: 消息原路返回
+//	@receiver self
+//	@param msg
 func (self *RecvMsgEvent) Reply(msg interface{}) {
 
 	// 没填的值不会被发送

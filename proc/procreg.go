@@ -12,7 +12,11 @@ var (
 	procByName = map[string]ProcessorBinder{}
 )
 
-// 注册事件处理器，内部及自定义收发流程时使用
+// RegisterProcessor
+//
+//	@Description: 注册事件处理器，内部及自定义收发流程时使用
+//	@param procName
+//	@param f
 func RegisterProcessor(procName string, f ProcessorBinder) {
 
 	if _, ok := procByName[procName]; ok {
@@ -22,7 +26,10 @@ func RegisterProcessor(procName string, f ProcessorBinder) {
 	procByName[procName] = f
 }
 
-// 获取处理器列表
+// ProcessorList
+//
+//	@Description: 获取处理器列表
+//	@return ret
 func ProcessorList() (ret []string) {
 
 	for name := range procByName {
@@ -33,6 +40,11 @@ func ProcessorList() (ret []string) {
 	return
 }
 
+// getPackageByCodecName
+//
+//	@Description: 根据消息处理器名字获取消息编解码
+//	@param name
+//	@return string
 func getPackageByCodecName(name string) string {
 	switch name {
 	case "gorillaws.ltv":

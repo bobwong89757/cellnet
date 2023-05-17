@@ -5,7 +5,8 @@ import (
 	"github.com/bobwong89757/cellnet/msglog"
 )
 
-// 带有RPC和relay功能
+// MsgHooker
+// @Description: 带有RPC和relay功能
 type MsgHooker struct {
 }
 

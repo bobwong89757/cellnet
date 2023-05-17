@@ -1,6 +1,7 @@
 package cellnet
 
-// 端, 可通过接口查询获得更多接口支持,如PeerProperty,ContextSet, SessionAccessor
+// Peer
+// @Description: 端, 可通过接口查询获得更多接口支持,如PeerProperty,ContextSet, SessionAccessor
 type Peer interface {
 	// 开启端，传入地址
 	Start() Peer
@@ -12,7 +13,8 @@ type Peer interface {
 	TypeName() string
 }
 
-// Peer基础属性
+// PeerProperty
+// @Description: Peer基础属性
 type PeerProperty interface {
 	Name() string
 
@@ -30,13 +32,15 @@ type PeerProperty interface {
 	SetQueue(v EventQueue)
 }
 
-// 基本的通用Peer
+// GenericPeer
+// @Description: 基本的通用Peer
 type GenericPeer interface {
 	Peer
 	PeerProperty
 }
 
-// 设置和获取自定义属性
+// ContextSet
+// @Description: 设置和获取自定义属性
 type ContextSet interface {
 	// 为对象设置一个自定义属性
 	SetContext(key interface{}, v interface{})
@@ -48,7 +52,8 @@ type ContextSet interface {
 	FetchContext(key, valuePtr interface{}) bool
 }
 
-// 会话访问
+// SessionAccessor
+// @Description: 会话访问
 type SessionAccessor interface {
 
 	// 获取一个连接
@@ -64,12 +69,14 @@ type SessionAccessor interface {
 	CloseAllSession()
 }
 
-// 检查Peer是否正常工作
+// PeerReadyChecker
+// @Description: 检查Peer是否正常工作
 type PeerReadyChecker interface {
 	IsReady() bool
 }
 
-// 开启IO层异常捕获,在生产版本对外端口应该打开此设置
+// PeerCaptureIOPanic
+// @Description: 开启IO层异常捕获,在生产版本对外端口应该打开此设置
 type PeerCaptureIOPanic interface {
 	// 开启IO层异常捕获
 	EnableCaptureIOPanic(v bool)

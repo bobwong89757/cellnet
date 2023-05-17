@@ -11,7 +11,7 @@ import (
 )
 
 // wsAcceptor
-// @Description: websocket接收器
+// @Description: websocket侦听器
 type wsAcceptor struct {
 	peer.CoreSessionManager
 	peer.CorePeerProperty

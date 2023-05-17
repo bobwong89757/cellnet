@@ -14,7 +14,8 @@ type context struct {
 	data interface{}
 }
 
-// 消息元信息
+// MessageMeta
+// @Description: 消息元信息
 type MessageMeta struct {
 	Codec Codec        // 消息用到的编码
 	Type  reflect.Type // 消息类型, 注册时使用指针类型
@@ -48,7 +49,11 @@ func (self *MessageMeta) FullName() string {
 	return sb.String()
 }
 
-// 创建meta类型的实例
+// NewType
+//
+//	@Description: 创建meta类型的实例
+//	@receiver self
+//	@return interface{}
 func (self *MessageMeta) NewType() interface{} {
 	if self.Type == nil {
 		return nil
@@ -57,7 +62,13 @@ func (self *MessageMeta) NewType() interface{} {
 	return reflect.New(self.Type).Interface()
 }
 
-// 为meta对应的名字绑定上下文
+// SetContext
+//
+//	@Description: 为meta对应的名字绑定上下文
+//	@receiver self
+//	@param name
+//	@param data
+//	@return *MessageMeta
 func (self *MessageMeta) SetContext(name string, data interface{}) *MessageMeta {
 
 	self.ctxListGuard.Lock()
@@ -79,7 +90,13 @@ func (self *MessageMeta) SetContext(name string, data interface{}) *MessageMeta 
 	return self
 }
 
-// 获取meta对应的名字绑定上下文
+// GetContext
+//
+//	@Description: 获取meta对应的名字绑定上下文
+//	@receiver self
+//	@param key
+//	@return interface{}
+//	@return bool
 func (self *MessageMeta) GetContext(key string) (interface{}, bool) {
 
 	self.ctxListGuard.RLock()
@@ -95,7 +112,13 @@ func (self *MessageMeta) GetContext(key string) (interface{}, bool) {
 	return nil, false
 }
 
-// 按字符串格式取context
+// GetContextAsString
+//
+//	@Description: 按字符串格式取context
+//	@receiver self
+//	@param key
+//	@param defaultValue
+//	@return string
 func (self *MessageMeta) GetContextAsString(key, defaultValue string) string {
 
 	if v, ok := self.GetContext(key); ok {
@@ -108,7 +131,13 @@ func (self *MessageMeta) GetContextAsString(key, defaultValue string) string {
 	return defaultValue
 }
 
-// 按字符串格式取context
+// GetContextAsInt
+//
+//	@Description: 按整形格式取context
+//	@receiver self
+//	@param name
+//	@param defaultValue
+//	@return int
 func (self *MessageMeta) GetContextAsInt(name string, defaultValue int) int {
 
 	if v, ok := self.GetContext(name); ok {
@@ -139,7 +168,11 @@ Type -> Meta
 
 */
 
-// 注册消息元信息
+// RegisterMessageMeta
+//
+//	@Description: 注册消息元信息
+//	@param meta
+//	@return *MessageMeta
 func RegisterMessageMeta(meta *MessageMeta) *MessageMeta {
 
 	// 注册时, 统一为非指针类型
@@ -172,7 +205,11 @@ func RegisterMessageMeta(meta *MessageMeta) *MessageMeta {
 	return meta
 }
 
-// 根据名字查找消息元信息
+// MessageMetaByFullName
+//
+//	@Description: 根据名字查找消息元信息
+//	@param name
+//	@return *MessageMeta
 func MessageMetaByFullName(name string) *MessageMeta {
 	if v, ok := metaByFullName[name]; ok {
 		return v
@@ -200,7 +237,11 @@ func MessageMetaVisit(nameRule string, callback func(meta *MessageMeta) bool) er
 	return nil
 }
 
-// 根据类型查找消息元信息
+// MessageMetaByType
+//
+//	@Description: 根据类型查找消息元信息
+//	@param t
+//	@return *MessageMeta
 func MessageMetaByType(t reflect.Type) *MessageMeta {
 
 	if t == nil {
@@ -218,7 +259,11 @@ func MessageMetaByType(t reflect.Type) *MessageMeta {
 	return nil
 }
 
-// 根据消息对象获得消息元信息
+// MessageMetaByMsg
+//
+//	@Description: 根据消息对象获得消息元信息
+//	@param msg
+//	@return *MessageMeta
 func MessageMetaByMsg(msg interface{}) *MessageMeta {
 
 	if msg == nil {
@@ -228,7 +273,11 @@ func MessageMetaByMsg(msg interface{}) *MessageMeta {
 	return MessageMetaByType(reflect.TypeOf(msg))
 }
 
-// 根据id查找消息元信息
+// MessageMetaByID
+//
+//	@Description: 根据id查找消息元信息
+//	@param id
+//	@return *MessageMeta
 func MessageMetaByID(id int) *MessageMeta {
 	if v, ok := metaByID[id]; ok {
 		return v
@@ -237,7 +286,11 @@ func MessageMetaByID(id int) *MessageMeta {
 	return nil
 }
 
-// 消息名（没有包，纯类型名）
+// MessageToName
+//
+//	@Description: 消息名（没有包，纯类型名）
+//	@param msg
+//	@return string
 func MessageToName(msg interface{}) string {
 
 	if msg == nil {

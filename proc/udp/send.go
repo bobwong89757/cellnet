@@ -8,6 +8,13 @@ import (
 	"github.com/bobwong89757/cellnet/peer/udp"
 )
 
+// sendPacket
+//
+//	@Description: 发送消息
+//	@param writer
+//	@param ctx
+//	@param msg
+//	@return error
 func sendPacket(writer udp.DataWriter, ctx cellnet.ContextSet, msg interface{}) error {
 
 	// 将用户数据转换为字节数组和消息ID

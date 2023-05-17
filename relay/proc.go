@@ -13,7 +13,13 @@ type PassthroughContent struct {
 	Str        string
 }
 
-// 处理入站的relay消息
+// ResoleveInboundEvent
+//
+//	@Description: 处理入站的relay消息
+//	@param inputEvent
+//	@return ouputEvent
+//	@return handled
+//	@return err
 func ResoleveInboundEvent(inputEvent cellnet.Event) (ouputEvent cellnet.Event, handled bool, err error) {
 
 	switch relayMsg := inputEvent.Message().(type) {
@@ -58,7 +64,12 @@ func ResoleveInboundEvent(inputEvent cellnet.Event) (ouputEvent cellnet.Event, h
 	return inputEvent, false, nil
 }
 
-// 处理relay.Relay出站消息的日志
+// ResolveOutboundEvent
+//
+//	@Description: 处理relay.Relay出站消息的日志
+//	@param inputEvent
+//	@return handled
+//	@return err
 func ResolveOutboundEvent(inputEvent cellnet.Event) (handled bool, err error) {
 
 	switch relayMsg := inputEvent.Message().(type) {

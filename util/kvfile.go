@@ -5,7 +5,12 @@ import (
 	"strings"
 )
 
-// 读取=分割的配置文件
+// ReadKVFile
+//
+//	@Description: 读取=分割的配置文件
+//	@param filename
+//	@param callback
+//	@return ret
 func ReadKVFile(filename string, callback func(k, v string) bool) (ret error) {
 	readErr := ReadFileLines(filename, func(line string) bool {
 
@@ -56,7 +61,12 @@ type KVPair struct {
 	Value string
 }
 
-// 将=分割的文件按值读回
+// ReadKVFileValues
+//
+//	@Description: 将=分割的文件按值读回
+//	@param filename
+//	@return ret
+//	@return err
 func ReadKVFileValues(filename string) (ret []KVPair, err error) {
 
 	err = ReadKVFile(filename, func(k, v string) bool {

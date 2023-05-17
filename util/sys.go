@@ -7,7 +7,11 @@ import (
 	"strings"
 )
 
-// 给定打印层数,一般3~5覆盖你的逻辑及封装代码范围
+// StackToString
+//
+//	@Description: 给定打印层数,一般3~5覆盖你的逻辑及封装代码范围
+//	@param count
+//	@return string
 func StackToString(count int) string {
 
 	const startStack = 2

@@ -9,9 +9,18 @@ import (
 	"github.com/bobwong89757/cellnet/proc"
 )
 
+// KCPMessageTransmitter
+// @Description: KCP消息传输器
 type KCPMessageTransmitter struct {
 }
 
+// OnRecvMessage
+//
+//	@Description: 接收消息
+//	@receiver KCPMessageTransmitter
+//	@param ses
+//	@return msg
+//	@return err
 func (KCPMessageTransmitter) OnRecvMessage(ses cellnet.Session) (msg interface{}, err error) {
 
 	data := ses.Raw().(kcp.DataReader).ReadData()
@@ -27,6 +36,13 @@ func (KCPMessageTransmitter) OnRecvMessage(ses cellnet.Session) (msg interface{}
 	return
 }
 
+// OnSendMessage
+//
+//	@Description: 发送消息
+//	@receiver KCPMessageTransmitter
+//	@param ses
+//	@param msg
+//	@return error
 func (KCPMessageTransmitter) OnSendMessage(ses cellnet.Session, msg interface{}) error {
 
 	writer := ses.(kcp.DataWriter)
@@ -41,7 +57,6 @@ func init() {
 	var convid uint32
 	binary.Read(rand.Reader, binary.LittleEndian, &convid)
 	proc.RegisterProcessor("kcp.ltv", func(bundle proc.ProcessorBundle, userCallback cellnet.EventCallback, args ...interface{}) {
-
 		bundle.SetTransmitter(new(KCPMessageTransmitter))
 		bundle.SetCallback(userCallback)
 

@@ -8,7 +8,11 @@ import (
 	"io/ioutil"
 )
 
-// 字符串转为16位整形哈希
+// StringHash
+//
+//	@Description: 字符串转为16位整形哈希
+//	@param s
+//	@return hash
 func StringHash(s string) (hash uint16) {
 
 	for _, c := range s {
@@ -21,19 +25,32 @@ func StringHash(s string) (hash uint16) {
 	return
 }
 
-// 字节计算MD5
+// BytesMD5
+//
+//	@Description: 字节计算MD5
+//	@param data
+//	@return string
 func BytesMD5(data []byte) string {
 	m := md5.New()
 	m.Write(data)
 	return hex.EncodeToString(m.Sum(nil))
 }
 
-// 字符串计算MD5
+// StringMD5
+//
+//	@Description: 字符串计算MD5
+//	@param str
+//	@return string
 func StringMD5(str string) string {
 	return BytesMD5([]byte(str))
 }
 
-// 压缩字节
+// CompressBytes
+//
+//	@Description: 压缩字节
+//	@param data
+//	@return []byte
+//	@return error
 func CompressBytes(data []byte) ([]byte, error) {
 
 	var buf bytes.Buffer
@@ -49,7 +66,12 @@ func CompressBytes(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// 解压字节
+// DecompressBytes
+//
+//	@Description: 解压字节
+//	@param data
+//	@return []byte
+//	@return error
 func DecompressBytes(data []byte) ([]byte, error) {
 
 	reader, err := zlib.NewReader(bytes.NewReader(data))

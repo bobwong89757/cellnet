@@ -4,14 +4,19 @@ import (
 	"sync"
 )
 
-// 不限制大小，添加不发生阻塞，接收阻塞等待
+// Pipe
+// @Description: 不限制大小，添加不发生阻塞，接收阻塞等待
 type Pipe struct {
 	list      []interface{}
 	listGuard sync.Mutex
 	listCond  *sync.Cond
 }
 
-// 添加时不会发送阻塞
+// Add
+//
+//	@Description: 添加时不会发送阻塞
+//	@receiver self
+//	@param msg
 func (self *Pipe) Add(msg interface{}) {
 	self.listGuard.Lock()
 	self.list = append(self.list, msg)
@@ -32,7 +37,12 @@ func (self *Pipe) Reset() {
 	self.listGuard.Unlock()
 }
 
-// 如果没有数据，发生阻塞
+// Pick
+//
+//	@Description: 如果没有数据，发生阻塞
+//	@receiver self
+//	@param retList
+//	@return exit
 func (self *Pipe) Pick(retList *[]interface{}) (exit bool) {
 
 	self.listGuard.Lock()
@@ -41,9 +51,9 @@ func (self *Pipe) Pick(retList *[]interface{}) (exit bool) {
 		self.listCond.Wait()
 	}
 
-// 	self.listGuard.Unlock()
+	// 	self.listGuard.Unlock()
 
-// 	self.listGuard.Lock()
+	// 	self.listGuard.Lock()
 
 	// 复制出队列
 

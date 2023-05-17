@@ -19,7 +19,13 @@ const (
 	msgIDSize = 2 // 消息ID字段
 )
 
-// 接收Length-Type-Value格式的封包流程
+// RecvLTVPacket
+//
+//	@Description: 接收Length-Type-Value格式的封包流程
+//	@param reader
+//	@param maxPacketSize
+//	@return msg
+//	@return err
 func RecvLTVPacket(reader io.Reader, maxPacketSize int) (msg interface{}, err error) {
 
 	// Size为uint16，占2字节
@@ -73,7 +79,13 @@ func RecvLTVPacket(reader io.Reader, maxPacketSize int) (msg interface{}, err er
 	return
 }
 
-// 发送Length-Type-Value格式的封包流程
+// SendLTVPacket
+//
+//	@Description: 发送Length-Type-Value格式的封包流程
+//	@param writer
+//	@param ctx
+//	@param data
+//	@return error
 func SendLTVPacket(writer io.Writer, ctx cellnet.ContextSet, data interface{}) error {
 
 	var (

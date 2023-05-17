@@ -6,7 +6,8 @@ import (
 	"sync"
 )
 
-// 消息派发器，可选件，兼容v3以前的注册及派发消息方式，在没有代码生成框架及工具时是较方便的接收处理接口
+// MessageDispatcher
+// @Description: 消息派发器，可选件，兼容v3以前的注册及派发消息方式，在没有代码生成框架及工具时是较方便的接收处理接口
 type MessageDispatcher struct {
 	handlerByType      map[reflect.Type][]cellnet.EventCallback
 	handlerByTypeGuard sync.RWMutex

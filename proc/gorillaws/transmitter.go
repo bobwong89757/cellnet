@@ -12,9 +12,18 @@ const (
 	MsgIDSize = 2 // uint16
 )
 
+// WSMessageTransmitter
+// @Description: WS消息传输器
 type WSMessageTransmitter struct {
 }
 
+// OnRecvMessage
+//
+//	@Description: 接收消息
+//	@receiver WSMessageTransmitter
+//	@param ses
+//	@return msg
+//	@return err
 func (WSMessageTransmitter) OnRecvMessage(ses cellnet.Session) (msg interface{}, err error) {
 
 	conn, ok := ses.Raw().(*websocket.Conn)
@@ -47,6 +56,13 @@ func (WSMessageTransmitter) OnRecvMessage(ses cellnet.Session) (msg interface{},
 	return
 }
 
+// OnSendMessage
+//
+//	@Description: 发送消息
+//	@receiver WSMessageTransmitter
+//	@param ses
+//	@param msg
+//	@return error
 func (WSMessageTransmitter) OnSendMessage(ses cellnet.Session, msg interface{}) error {
 
 	conn, ok := ses.Raw().(*websocket.Conn)

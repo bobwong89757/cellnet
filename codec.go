@@ -1,6 +1,7 @@
 package cellnet
 
-// 编码包
+// Codec
+// @Description: 编码包
 type Codec interface {
 	// 将数据转换为字节数组
 	Encode(msgObj interface{}, ctx ContextSet) (data interface{}, err error)

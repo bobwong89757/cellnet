@@ -7,9 +7,18 @@ import (
 	"github.com/bobwong89757/cellnet/proc"
 )
 
+// UDPMessageTransmitter
+// @Description: UDP消息传输器
 type UDPMessageTransmitter struct {
 }
 
+// OnRecvMessage
+//
+//	@Description: 接收消息
+//	@receiver UDPMessageTransmitter
+//	@param ses
+//	@return msg
+//	@return err
 func (UDPMessageTransmitter) OnRecvMessage(ses cellnet.Session) (msg interface{}, err error) {
 
 	data := ses.Raw().(udp.DataReader).ReadData()
@@ -21,6 +30,13 @@ func (UDPMessageTransmitter) OnRecvMessage(ses cellnet.Session) (msg interface{}
 	return
 }
 
+// OnSendMessage
+//
+//	@Description: 发送消息
+//	@receiver UDPMessageTransmitter
+//	@param ses
+//	@param msg
+//	@return error
 func (UDPMessageTransmitter) OnSendMessage(ses cellnet.Session, msg interface{}) error {
 
 	writer := ses.(udp.DataWriter)
@@ -32,7 +48,7 @@ func (UDPMessageTransmitter) OnSendMessage(ses cellnet.Session, msg interface{})
 }
 
 func init() {
-
+	//  注册udp.ltv包处理器
 	proc.RegisterProcessor("udp.ltv", func(bundle proc.ProcessorBundle, userCallback cellnet.EventCallback, args ...interface{}) {
 
 		bundle.SetTransmitter(new(UDPMessageTransmitter))

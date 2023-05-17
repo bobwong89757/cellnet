@@ -6,26 +6,41 @@ import (
 	"sync"
 )
 
-// 同步接收消息器, 可选件，可作为流程测试辅助工具
+// SyncReceiver
+// @Description: 同步接收消息器, 可选件，可作为流程测试辅助工具
 type SyncReceiver struct {
 	evChan chan cellnet.Event
 
 	callback func(ev cellnet.Event)
 }
 
-// 将处理回调返回给BindProcessorHandler用于注册
+// EventCallback
+//
+//	@Description: 将处理回调返回给BindProcessorHandler用于注册
+//	@receiver self
+//	@return cellnet.EventCallback
 func (self *SyncReceiver) EventCallback() cellnet.EventCallback {
 
 	return self.callback
 }
 
-// 持续阻塞，直到某个消息到达后，使用回调返回消息
+// Recv
+//
+//	@Description: 持续阻塞，直到某个消息到达后，使用回调返回消息
+//	@receiver self
+//	@param callback
+//	@return *SyncReceiver
 func (self *SyncReceiver) Recv(callback cellnet.EventCallback) *SyncReceiver {
 	callback(<-self.evChan)
 	return self
 }
 
-// 持续阻塞，直到某个消息到达后，返回消息
+// WaitMessage
+//
+//	@Description: 持续阻塞，直到某个消息到达后，返回消息
+//	@receiver self
+//	@param msgName
+//	@return msg
 func (self *SyncReceiver) WaitMessage(msgName string) (msg interface{}) {
 
 	var wg sync.WaitGroup
@@ -51,6 +66,11 @@ func (self *SyncReceiver) WaitMessage(msgName string) (msg interface{}) {
 	return
 }
 
+// NewSyncReceiver
+//
+//	@Description: 新建同步消息接收器
+//	@param p
+//	@return *SyncReceiver
 func NewSyncReceiver(p cellnet.Peer) *SyncReceiver {
 
 	self := &SyncReceiver{

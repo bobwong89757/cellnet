@@ -8,10 +8,17 @@ import (
 	"github.com/bobwong89757/cellnet/rpc"
 )
 
-// 带有RPC和relay功能
+// MsgHooker
+// @Description: 带有RPC和relay功能的消息钩子
 type MsgHooker struct {
 }
 
+// OnInboundEvent
+//
+//	@Description: 消息入口
+//	@receiver self
+//	@param inputEvent
+//	@return outputEvent
 func (self MsgHooker) OnInboundEvent(inputEvent cellnet.Event) (outputEvent cellnet.Event) {
 
 	var handled bool
@@ -41,6 +48,12 @@ func (self MsgHooker) OnInboundEvent(inputEvent cellnet.Event) (outputEvent cell
 	return inputEvent
 }
 
+// OnOutboundEvent
+//
+//	@Description: 消息出口
+//	@receiver self
+//	@param inputEvent
+//	@return outputEvent
 func (self MsgHooker) OnOutboundEvent(inputEvent cellnet.Event) (outputEvent cellnet.Event) {
 
 	handled, err := rpc.ResolveOutboundEvent(inputEvent)

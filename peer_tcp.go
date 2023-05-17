@@ -2,7 +2,8 @@ package cellnet
 
 import "time"
 
-// TCP
+// TCPSocketOption
+// @Description: TCP Socket选项
 type TCPSocketOption interface {
 	// 收发缓冲大小，默认-1
 	SetSocketBuffer(readBufferSize, writeBufferSize int, noDelay bool)
@@ -14,7 +15,8 @@ type TCPSocketOption interface {
 	SetSocketDeadline(read, write time.Duration)
 }
 
-// TCP接受器，具备会话访问
+// TCPAcceptor
+// @Description: TCP接受器，具备会话访问
 type TCPAcceptor interface {
 	GenericPeer
 
@@ -27,7 +29,8 @@ type TCPAcceptor interface {
 	Port() int
 }
 
-// TCP连接器
+// TCPConnector
+// @Description: TCP连接器
 type TCPConnector interface {
 	GenericPeer
 

@@ -2,7 +2,8 @@ package cellnet
 
 import "time"
 
-// Websocket接受器，具备会话访问
+// WSAcceptor
+// @Description: Websocket接受器，具备会话访问
 type WSAcceptor interface {
 	GenericPeer
 
@@ -18,7 +19,8 @@ type WSAcceptor interface {
 	Port() int
 }
 
-// Websocket连接器
+// WSConnector
+// @Description: Websocket连接器
 type WSConnector interface {
 	GenericPeer
 

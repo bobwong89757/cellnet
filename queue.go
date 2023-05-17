@@ -8,7 +8,8 @@ import (
 	"time"
 )
 
-// 事件队列
+// EventQueue
+// @Description: 事件队列
 type EventQueue interface {
 	// 事件队列开始工作
 	StartLoop() EventQueue
@@ -41,17 +42,29 @@ type eventQueue struct {
 	onPanic CapturePanicNotifyFunc
 }
 
-// 启动崩溃捕获
+// EnableCapturePanic
+//
+//	@Description: 启动崩溃捕获
+//	@receiver self
+//	@param v
 func (self *eventQueue) EnableCapturePanic(v bool) {
 	self.capturePanic = v
 }
 
-// 设置捕获崩溃通知
+// SetCapturePanicNotify
+//
+//	@Description: 设置捕获崩溃通知
+//	@receiver self
+//	@param callback
 func (self *eventQueue) SetCapturePanicNotify(callback CapturePanicNotifyFunc) {
 	self.onPanic = callback
 }
 
-// 派发事件处理回调到队列中
+// Post
+//
+//	@Description: 派发事件处理回调到队列中
+//	@receiver self
+//	@param callback
 func (self *eventQueue) Post(callback func()) {
 
 	if callback == nil {
@@ -61,7 +74,11 @@ func (self *eventQueue) Post(callback func()) {
 	self.Add(callback)
 }
 
-// 保护调用用户函数
+// protectedCall
+//
+//	@Description: 保护调用用户函数
+//	@receiver self
+//	@param callback
 func (self *eventQueue) protectedCall(callback func()) {
 
 	if self.capturePanic {
@@ -77,7 +94,11 @@ func (self *eventQueue) protectedCall(callback func()) {
 	callback()
 }
 
-// 开启事件循环
+// StartLoop
+//
+//	@Description: 开启事件循环
+//	@receiver self
+//	@return EventQueue
 func (self *eventQueue) StartLoop() EventQueue {
 
 	self.endSignal.Add(1)
@@ -113,18 +134,28 @@ func (self *eventQueue) StartLoop() EventQueue {
 	return self
 }
 
-// 停止事件循环
+// StopLoop
+//
+//	@Description: 停止事件循环
+//	@receiver self
+//	@return EventQueue
 func (self *eventQueue) StopLoop() EventQueue {
 	self.Add(nil)
 	return self
 }
 
-// 等待退出消息
+// Wait
+//
+//	@Description: 等待退出消息
+//	@receiver self
 func (self *eventQueue) Wait() {
 	self.endSignal.Wait()
 }
 
-// 创建默认长度的队列
+// NewEventQueue
+//
+//	@Description: 创建默认长度的队列
+//	@return EventQueue
 func NewEventQueue() EventQueue {
 
 	return &eventQueue{
@@ -139,7 +170,11 @@ func NewEventQueue() EventQueue {
 	}
 }
 
-// 在会话对应的Peer上的事件队列中执行callback，如果没有队列，则马上执行
+// SessionQueuedCall
+//
+//	@Description: 在会话对应的Peer上的事件队列中执行callback，如果没有队列，则马上执行
+//	@param ses
+//	@param callback
 func SessionQueuedCall(ses Session, callback func()) {
 	if ses == nil {
 		return
@@ -151,7 +186,11 @@ func SessionQueuedCall(ses Session, callback func()) {
 	QueuedCall(q, callback)
 }
 
-// 有队列时队列调用，无队列时直接调用
+// QueuedCall
+//
+//	@Description: 有队列时队列调用，无队列时直接调用
+//	@param queue
+//	@param callback
 func QueuedCall(queue EventQueue, callback func()) {
 	if queue == nil {
 		callback()

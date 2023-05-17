@@ -7,6 +7,13 @@ import (
 	"github.com/bobwong89757/cellnet/peer/kcp"
 )
 
+// SendPacket
+//
+//	@Description: 发包
+//	@param writer
+//	@param ctx
+//	@param msg
+//	@return error
 func SendPacket(writer kcp.DataWriter, ctx cellnet.ContextSet, msg interface{}) error {
 
 	var (
@@ -32,7 +39,7 @@ func SendPacket(writer kcp.DataWriter, ctx cellnet.ContextSet, msg interface{}) 
 		msgID = meta.ID
 	}
 
-	pktData := make([]byte, BodySize + MsgIDSize +len(msgData))
+	pktData := make([]byte, BodySize+MsgIDSize+len(msgData))
 
 	// 写入消息长度做验证
 	binary.LittleEndian.PutUint16(pktData, uint16(MsgIDSize+len(msgData)))
@@ -41,7 +48,7 @@ func SendPacket(writer kcp.DataWriter, ctx cellnet.ContextSet, msg interface{}) 
 	binary.LittleEndian.PutUint16(pktData[BodySize:], uint16(msgID))
 
 	// Value
-	copy(pktData[BodySize + MsgIDSize:], msgData)
+	copy(pktData[BodySize+MsgIDSize:], msgData)
 
 	writer.WriteData(pktData)
 

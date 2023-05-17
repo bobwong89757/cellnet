@@ -4,7 +4,8 @@ import (
 	"github.com/bobwong89757/cellnet"
 )
 
-// 处理器设置接口，由各Peer实现
+// ProcessorBundle
+// @Description: 处理器设置接口，由各Peer实现
 type ProcessorBundle interface {
 
 	// 设置 传输器，负责收发消息
@@ -17,7 +18,11 @@ type ProcessorBundle interface {
 	SetCallback(v cellnet.EventCallback)
 }
 
-// 让EventCallback保证放在ses的队列里，而不是并发的
+// NewQueuedEventCallback
+//
+//	@Description: 让EventCallback保证放在ses的队列里，而不是并发的
+//	@param callback
+//	@return cellnet.EventCallback
 func NewQueuedEventCallback(callback cellnet.EventCallback) cellnet.EventCallback {
 
 	return func(ev cellnet.Event) {
@@ -33,6 +38,12 @@ func NewQueuedEventCallback(callback cellnet.EventCallback) cellnet.EventCallbac
 // 当需要多个Hooker时，使用NewMultiHooker将多个hooker合并成1个hooker处理
 type MultiHooker []cellnet.EventHooker
 
+// OnInboundEvent
+//
+//	@Description: 消息入口
+//	@receiver self
+//	@param input
+//	@return output
 func (self MultiHooker) OnInboundEvent(input cellnet.Event) (output cellnet.Event) {
 
 	for _, h := range self {
@@ -47,6 +58,12 @@ func (self MultiHooker) OnInboundEvent(input cellnet.Event) (output cellnet.Even
 	return input
 }
 
+// OnOutboundEvent
+//
+//	@Description: 消息出口
+//	@receiver self
+//	@param input
+//	@return output
 func (self MultiHooker) OnOutboundEvent(input cellnet.Event) (output cellnet.Event) {
 
 	for _, h := range self {
@@ -61,6 +78,11 @@ func (self MultiHooker) OnOutboundEvent(input cellnet.Event) (output cellnet.Eve
 	return input
 }
 
+// NewMultiHooker
+//
+//	@Description: 新建MultiHooker
+//	@param h
+//	@return cellnet.EventHooker
 func NewMultiHooker(h ...cellnet.EventHooker) cellnet.EventHooker {
 
 	return MultiHooker(h)

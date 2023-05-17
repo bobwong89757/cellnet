@@ -9,7 +9,13 @@ import (
 	"strings"
 )
 
-// 将普通地址格式(host:port)拆分
+// SpliteAddress
+//
+//	@Description: 将普通地址格式(host:port)拆分
+//	@param addr
+//	@return host
+//	@return port
+//	@return err
 func SpliteAddress(addr string) (host string, port int, err error) {
 
 	var portStr string
@@ -29,17 +35,28 @@ func SpliteAddress(addr string) (host string, port int, err error) {
 	return
 }
 
-// 将host和端口合并为(host:port)格式的地址
+// JoinAddress
+//
+//	@Description: 将host和端口合并为(host:port)格式的地址
+//	@param host
+//	@param port
+//	@return string
 func JoinAddress(host string, port int) string {
 	return fmt.Sprintf("%s:%d", host, port)
 }
 
-// 修复ws没有实现所有net.conn方法，导致无法获取客服端地址问题.
+// RemoteAddr
+// @Description: 修复ws没有实现所有net.conn方法，导致无法获取客服端地址问题.
 type RemoteAddr interface {
 	RemoteAddr() net.Addr
 }
 
-// 获取session远程的地址
+// GetRemoteAddrss
+//
+//	@Description: 获取session远程的地址
+//	@param ses
+//	@return string
+//	@return bool
 func GetRemoteAddrss(ses cellnet.Session) (string, bool) {
 	if ses == nil {
 		return "", false
@@ -57,7 +74,8 @@ var (
 	ErrInvalidAddressFormat = errors.New("invalid address format")
 )
 
-// 支持地址范围的格式
+// Address
+// @Description: 支持地址范围的格式
 type Address struct {
 	Scheme  string
 	Host    string
@@ -66,12 +84,22 @@ type Address struct {
 	Path    string
 }
 
-// 返回(host:port)格式地址
+// HostPortString
+//
+//	@Description: 返回(host:port)格式地址
+//	@receiver self
+//	@param port
+//	@return string
 func (self *Address) HostPortString(port int) string {
 	return fmt.Sprintf("%s:%d", self.Host, port)
 }
 
-// 返回scheme://host:port/path 格式地址
+// String
+//
+//	@Description: 返回scheme://host:port/path 格式地址
+//	@receiver self
+//	@param port
+//	@return string
 func (self *Address) String(port int) string {
 	if self.Scheme == "" {
 		return self.HostPortString(port)
@@ -80,7 +108,12 @@ func (self *Address) String(port int) string {
 	return fmt.Sprintf("%s://%s:%d%s", self.Scheme, self.Host, port, self.Path)
 }
 
-// cellnet专有的地址格式 scheme://host:minPort~maxPort/path  提供地址范围扩展
+// ParseAddress
+//
+//	@Description: cellnet专有的地址格式 scheme://host:minPort~maxPort/path  提供地址范围扩展
+//	@param addr
+//	@return addrObj
+//	@return err
 func ParseAddress(addr string) (addrObj *Address, err error) {
 	addrObj = new(Address)
 
@@ -146,7 +179,13 @@ func ParseAddress(addr string) (addrObj *Address, err error) {
 	return
 }
 
-// 在给定的端口范围内找到一个能用的端口 addr格式参考ParseAddress函数
+// DetectPort
+//
+//	@Description: 在给定的端口范围内找到一个能用的端口 addr格式参考ParseAddress函数
+//	@param addr
+//	@param fn
+//	@return interface{}
+//	@return error
 func DetectPort(addr string, fn func(a *Address, port int) (interface{}, error)) (interface{}, error) {
 
 	addrObj, err := ParseAddress(addr)
@@ -171,7 +210,10 @@ func DetectPort(addr string, fn func(a *Address, port int) (interface{}, error))
 	return nil, fmt.Errorf("unable to bind to %s", addr)
 }
 
-// 获取本地IP地址，有多重IP时，默认取第一个
+// GetLocalIP
+//
+//	@Description: 获取本地IP地址，有多重IP时，默认取第一个
+//	@return string
 func GetLocalIP() string {
 
 	// TODO 全面支持IPV6地址
@@ -187,7 +229,11 @@ func GetLocalIP() string {
 	return list[0].String()
 }
 
-// 获得本机的IPV4的地址
+// GetPrivateIPv4
+//
+//	@Description: 获得本机的IPV4的地址
+//	@return []*net.IPAddr
+//	@return error
 func GetPrivateIPv4() ([]*net.IPAddr, error) {
 	addresses, err := activeInterfaceAddresses()
 	if err != nil {
@@ -216,7 +262,11 @@ func GetPrivateIPv4() ([]*net.IPAddr, error) {
 	return addrs, nil
 }
 
-// 获得本机的IPV6地址
+// GetPublicIPv6
+//
+//	@Description: 获得本机的IPV6地址
+//	@return []*net.IPAddr
+//	@return error
 func GetPublicIPv6() ([]*net.IPAddr, error) {
 	addresses, err := net.InterfaceAddrs()
 	if err != nil {

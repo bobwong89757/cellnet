@@ -1,6 +1,7 @@
 package cellnet
 
-// 长连接
+// Session
+// @Description: 长连接消息会话
 type Session interface {
 
 	// 获得原始的Socket连接
@@ -19,7 +20,8 @@ type Session interface {
 	ID() int64
 }
 
-// 直接发送数据时，将*RawPacket作为Send参数
+// RawPacket
+// @Description: 直接发送数据时，将*RawPacket作为Send参数
 type RawPacket struct {
 	MsgData []byte
 	MsgID   int

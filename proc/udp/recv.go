@@ -13,6 +13,12 @@ const (
 	HeaderSize = MsgIDLen + MsgIDLen // 整个UDP包头部分
 )
 
+// RecvPacket
+//
+//	@Description: 接收消息
+//	@param pktData
+//	@return msg
+//	@return err
 func RecvPacket(pktData []byte) (msg interface{}, err error) {
 
 	// 小于包头，使用nc指令测试时，为1

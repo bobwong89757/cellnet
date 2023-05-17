@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-
+	// 注册消息处理器为tcp.ltv
 	proc.RegisterProcessor("tcp.ltv", func(bundle proc.ProcessorBundle, userCallback cellnet.EventCallback, args ...interface{}) {
 
 		bundle.SetTransmitter(new(TCPMessageTransmitter))

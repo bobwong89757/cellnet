@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-
+	//  注册处理器
 	proc.RegisterProcessor("gorillaws.ltv", func(bundle proc.ProcessorBundle, userCallback cellnet.EventCallback, args ...interface{}) {
 
 		bundle.SetTransmitter(new(WSMessageTransmitter))

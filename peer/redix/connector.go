@@ -44,7 +44,7 @@ func (self *redisConnector) Operate(callback func(client interface{}) interface{
 	pool := self.Pool()
 	c, err := pool.Get()
 	if err != nil {
-		log.GetLog().Error("get client failed, %s", err)
+		log.GetLog().Errorf("get client failed, %s", err)
 		return err
 	}
 
@@ -64,32 +64,32 @@ func (self *redisConnector) tryConnect() {
 
 			client, err := redis.DialTimeout(network, addr, time.Second*5)
 			if err != nil {
-				log.GetLog().Error("redis.Dial %s", err.Error())
+				log.GetLog().Errorf("redis.Dial %s", err.Error())
 				return nil, err
 			}
 
 			if len(self.Password) > 0 {
 				if err = client.Cmd("AUTH", self.Password).Err; err != nil {
-					log.GetLog().Error("redis.Auth %s %s", self.Password, err.Error())
+					log.GetLog().Errorf("redis.Auth %s %s", self.Password, err.Error())
 					client.Close()
 					return nil, err
 				}
 			}
 			if self.DBIndex > 0 {
 				if err = client.Cmd("SELECT", self.DBIndex).Err; err != nil {
-					log.GetLog().Error("redis.SELECT %d %s", self.DBIndex, err.Error())
+					log.GetLog().Errorf("redis.SELECT %d %s", self.DBIndex, err.Error())
 					client.Close()
 					return nil, err
 				}
 			}
 
-			log.GetLog().Info("Create redis pool connection: %s name: %s index: %d", addr, self.Name(), self.DBIndex)
+			log.GetLog().Infof("Create redis pool connection: %s name: %s index: %d", addr, self.Name(), self.DBIndex)
 
 			return client, nil
 		})
 
 		if err != nil {
-			log.GetLog().Error("Redis connect failed: %s, wait %d secods retry...", err, faildWaitSec)
+			log.GetLog().Errorf("Redis connect failed: %s, wait %d secods retry...", err, faildWaitSec)
 
 			time.Sleep(time.Duration(faildWaitSec) * time.Second)
 

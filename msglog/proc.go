@@ -26,7 +26,7 @@ func WriteRecvLogger(protocol string, ses cellnet.Session, msg interface{}) {
 	if IsMsgLogValid(cellnet.MessageToID(msg)) {
 		peerInfo := ses.Peer().(cellnet.PeerProperty)
 
-		log.GetLog().Debug("#%s.recv(%s)@%d len: %d %s | %s",
+		log.GetLog().Debugf("#%s.recv(%s)@%d len: %d %s | %s",
 			protocol,
 			peerInfo.Name(),
 			ses.ID(),
@@ -52,7 +52,7 @@ func WriteSendLogger(protocol string, ses cellnet.Session, msg interface{}) {
 	if IsMsgLogValid(cellnet.MessageToID(msg)) {
 		peerInfo := ses.Peer().(cellnet.PeerProperty)
 
-		log.GetLog().Debug("#%s.send(%s)@%d len: %d %s | %s",
+		log.GetLog().Debugf("#%s.send(%s)@%d len: %d %s | %s",
 			protocol,
 			peerInfo.Name(),
 			ses.ID(),

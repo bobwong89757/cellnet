@@ -46,11 +46,11 @@ func main() {
 	proc.BindProcessorHandler(p, "tcp.ltv", func(ev cellnet.Event) {
 		switch msg := ev.Message().(type) {
 		case *cellnet.SessionConnected:
-			log.GetLog().Debug("client connected")
+			log.GetLog().Debugf("client connected")
 		case *cellnet.SessionClosed:
-			log.GetLog().Debug("client error")
+			log.GetLog().Debugf("client error")
 		case *proto.ChatACK:
-			log.GetLog().Info("sid%d say: %s", msg.Id, msg.Content)
+			log.GetLog().Infof("sid%d say: %s", msg.Id, msg.Content)
 		}
 	})
 
@@ -60,7 +60,7 @@ func main() {
 	// 事件队列开始循环
 	queue.StartLoop()
 
-	log.GetLog().Debug("Ready to chat!")
+	log.GetLog().Debugf("Ready to chat!")
 
 	// 阻塞的从命令行获取聊天输入
 	ReadConsole(func(str string) {

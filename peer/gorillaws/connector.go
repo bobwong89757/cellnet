@@ -105,7 +105,7 @@ func (self *wsConnector) connect(address string) {
 
 		addrObj, err := util.ParseAddress(address)
 		if err != nil {
-			log.GetLog().Error("invalid address: %s", address)
+			log.GetLog().Errorf("invalid address: %s", address)
 			break
 		}
 
@@ -123,10 +123,10 @@ func (self *wsConnector) connect(address string) {
 		if err != nil {
 			if self.tryConnTimes <= reportConnectFailedLimitTimes {
 
-				log.GetLog().Error("#ws.connect failed(%s) %v", self.Name(), err.Error())
+				log.GetLog().Errorf("#ws.connect failed(%s) %v", self.Name(), err.Error())
 
 				if self.tryConnTimes == reportConnectFailedLimitTimes {
-					log.GetLog().Error("(%s) continue reconnecting, but mute log", self.Name())
+					log.GetLog().Errorf("(%s) continue reconnecting, but mute log", self.Name())
 				}
 			}
 

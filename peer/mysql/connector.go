@@ -77,21 +77,21 @@ func (self *mysqlConnector) tryConnect() {
 	config, err := mysql.ParseDSN(self.Address())
 
 	if err != nil {
-		log.GetLog().Error("Invalid mysql DSN: %s, %s\n", self.Address(), err.Error())
+		log.GetLog().Errorf("Invalid mysql DSN: %s, %s\n", self.Address(), err.Error())
 		return
 	}
 
-	log.GetLog().Info("Connecting to mysql (%s) %s/%s...", self.Name(), config.Addr, config.DBName)
+	log.GetLog().Infof("Connecting to mysql (%s) %s/%s...", self.Name(), config.Addr, config.DBName)
 
 	db, err := sql.Open("mysql", self.Address())
 	if err != nil {
-		log.GetLog().Error("Open mysql database error: %s\n", err.Error())
+		log.GetLog().Errorf("Open mysql database error: %s\n", err.Error())
 		return
 	}
 
 	err = db.Ping()
 	if err != nil {
-		log.GetLog().Error(err.Error())
+		log.GetLog().Errorf(err.Error())
 		return
 	}
 
@@ -103,7 +103,7 @@ func (self *mysqlConnector) tryConnect() {
 	self.dbGuard.Unlock()
 
 	if config != nil {
-		log.GetLog().Info("Connected to mysql %s/%s", config.Addr, config.DBName)
+		log.GetLog().Infof("Connected to mysql %s/%s", config.Addr, config.DBName)
 	}
 }
 

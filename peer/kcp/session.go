@@ -40,10 +40,10 @@ type KcpSession struct {
 	// Socket原始连接
 	//remote      *net.UDPAddr
 	//conn        *net.UDPConn
-	connGuard   sync.RWMutex
-	timeOutTick time.Time
-	kcpSession  *kcp.UDPSession
-	key         *connTrackKey
+	connGuard     sync.RWMutex
+	timeOutTick   time.Time
+	kcpSession    *kcp.UDPSession
+	key           *connTrackKey
 	ForceCloseTag bool
 }
 
@@ -79,7 +79,7 @@ func (self *KcpSession) Raw() interface{} {
 //func (self *KcpSession) Recv(data []byte) {
 //	n,err := self.KcpSession.Read(data)
 //	if err != nil {
-//		log.GetLog().Error("kcp读取错误 %v",err)
+//		log.GetLog().Errorf("kcp读取错误 %v",err)
 //	}
 //	self.pkt = data[:n]
 //	msg, err := self.ReadMessage(self)
@@ -94,7 +94,7 @@ func (self *KcpSession) ReadData() []byte {
 	//n, err := self.GetKcpSession().Read(recvBuff)
 	////n, err := self.KcpSession.Read(self.pkt)
 	//if err != nil {
-	//	log.GetLog().Error("%d kcp读取错误 %v", self.ID(),err)
+	//	log.GetLog().Errorf("%d kcp读取错误 %v", self.ID(),err)
 	//	return nil
 	//}
 	//if n > 0 {
@@ -158,7 +158,7 @@ func (self *KcpSession) protectedReadMessage() (msg interface{}, err error) {
 	defer func() {
 
 		if err := recover(); err != nil {
-			log.GetLog().Error("IO panic: %s", err)
+			log.GetLog().Errorf("IO panic: %s", err)
 			self.kcpSession.Close()
 		}
 
@@ -194,7 +194,7 @@ func (self *KcpSession) recvLoop() {
 			n, err := self.GetKcpSession().Read(recvBuff)
 			//n, err := self.KcpSession.Read(self.pkt)
 			if err != nil {
-				//log.GetLog().Error("%d kcp读取错误 %v", self.ID(),err)
+				//log.GetLog().Errorf("%d kcp读取错误 %v", self.ID(),err)
 				self.Close()
 				continue
 			}
@@ -211,7 +211,7 @@ func (self *KcpSession) recvLoop() {
 
 		if err != nil {
 			if !util.IsEOFOrNetReadError(err) {
-				log.GetLog().Error("session closed, sesid: %d, err: %s", self.ID(), err)
+				log.GetLog().Errorf("session closed, sesid: %d, err: %s", self.ID(), err)
 			}
 
 			self.sendQueue.Add(nil)

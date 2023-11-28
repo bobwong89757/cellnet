@@ -35,7 +35,7 @@ func (self *kcpSyncConnector) Start() cellnet.Peer {
 	// 尝试用Socket连接地址
 	sess, err := kcp.DialWithOptions(self.Address(), nil, 0, 0)
 	if err != nil {
-		log.GetLog().Error("#kcp.connect failed(%s) %v", self.Name(), err.Error())
+		log.GetLog().Errorf("#kcp.connect failed(%s) %v", self.Name(), err.Error())
 		self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self.defaultSes, Msg: &cellnet.SessionConnectError{}})
 		return self
 	}

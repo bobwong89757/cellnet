@@ -27,7 +27,7 @@ func main() {
 		switch msg := ev.Message().(type) {
 		case *cellnet.SessionConnected: // 接受一个连接
 			addr,has := util.GetRemoteAddrss(ev.Session())
-			log.GetLog().Debug("server connect %s,%v",addr,has)
+			log.GetLog().Debugf("server connect %s,%v",addr,has)
 
 			req := &proto.LoginServer{
 				UserId: "10026",

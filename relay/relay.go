@@ -16,7 +16,7 @@ func Relay(sesDetector interface{}, dataList ...interface{}) error {
 
 	ses, err := getSession(sesDetector)
 	if err != nil {
-		log.GetLog().Error("relay.Relay:", err)
+		log.GetLog().Errorf("relay.Relay:", err)
 		return err
 	}
 

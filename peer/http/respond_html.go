@@ -101,7 +101,7 @@ func (self *HTMLRespond) WriteRespond(ses *httpSession) error {
 
 	peerInfo := ses.Peer().(cellnet.PeerProperty)
 
-	log.GetLog().Debug("#http.send(%s) '%s' %s | [%d] HTML %s",
+	log.GetLog().Debugf("#http.send(%s) '%s' %s | [%d] HTML %s",
 		peerInfo.Name(),
 		ses.req.Method,
 		ses.req.URL.Path,
@@ -136,7 +136,7 @@ func (self *TextRespond) WriteRespond(ses *httpSession) error {
 
 	peerInfo := ses.Peer().(cellnet.PeerProperty)
 
-	log.GetLog().Debug("#http.send(%s) '%s' %s | [%d] HTML '%s'",
+	log.GetLog().Debugf("#http.send(%s) '%s' %s | [%d] HTML '%s'",
 		peerInfo.Name(),
 		ses.req.Method,
 		ses.req.URL.Path,

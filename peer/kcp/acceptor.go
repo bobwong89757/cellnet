@@ -64,7 +64,7 @@ func (self *kcpAcceptor) Start() cellnet.Peer {
 
 		self.listener, err = kcp.ListenWithOptions(addr.String(), nil, 0, 0)
 		if err != nil {
-			log.GetLog().Error("#kcp.listen failed(%s) %v", self.Name(), err.Error())
+			log.GetLog().Errorf("#kcp.listen failed(%s) %v", self.Name(), err.Error())
 			return nil, err
 		}
 		//return net.ListenUDP("udp", addr)
@@ -74,13 +74,13 @@ func (self *kcpAcceptor) Start() cellnet.Peer {
 
 	if err != nil {
 
-		log.GetLog().Error("#kcp.listen failed(%s) %v", self.Name(), err.Error())
+		log.GetLog().Errorf("#kcp.listen failed(%s) %v", self.Name(), err.Error())
 		return self
 	}
 
 	self.conn = ln.(*net.UDPConn)
 
-	log.GetLog().Info("#kcp.listen(%s) %s", self.Name(), finalAddr.String(self.Port()))
+	log.GetLog().Infof("#kcp.listen(%s) %s", self.Name(), finalAddr.String(self.Port()))
 
 	go self.accept()
 	return self
@@ -90,7 +90,7 @@ func (self *kcpAcceptor) Start() cellnet.Peer {
 //	defer func() {
 //
 //		if err := recover(); err != nil {
-//			log.GetLog().Error("IO panic: %s", err)
+//			log.GetLog().Errorf("IO panic: %s", err)
 //			self.conn.Close()
 //		}
 //
@@ -136,7 +136,7 @@ func (self *kcpAcceptor) accept() {
 			}
 
 			// 调试状态时, 才打出accept的具体错误
-			log.GetLog().Error("#kcp.accept failed(%s) %v", self.Name(), err.Error())
+			log.GetLog().Errorf("#kcp.accept failed(%s) %v", self.Name(), err.Error())
 			break
 		}
 
@@ -162,7 +162,7 @@ func (self *kcpAcceptor) accept() {
 
 func (self *kcpAcceptor) onNewSession(kcpSession *kcp.UDPSession) {
 
-	self.getSession(kcpSession.RemoteAddr().(*net.UDPAddr),kcpSession)
+	self.getSession(kcpSession.RemoteAddr().(*net.UDPAddr), kcpSession)
 }
 
 // 检查超时session
@@ -186,7 +186,7 @@ func (self *kcpAcceptor) checkTimeoutSession() {
 	}
 }
 
-func (self *kcpAcceptor) getSession(addr *net.UDPAddr,kcpSession *kcp.UDPSession) *KcpSession {
+func (self *kcpAcceptor) getSession(addr *net.UDPAddr, kcpSession *kcp.UDPSession) *KcpSession {
 
 	key := newConnTrackKey(addr)
 
@@ -200,7 +200,7 @@ func (self *kcpAcceptor) getSession(addr *net.UDPAddr,kcpSession *kcp.UDPSession
 			Ses: ses,
 			Msg: &cellnet.SessionAccepted{},
 		})
-	}else {
+	} else {
 		ses.pInterface = self
 	}
 

@@ -74,7 +74,7 @@ func printFile(pool *pbmeta.DescriptorPool) (string, bool) {
 
 	tpl, err := template.New("msgid").Parse(codeTemplate)
 	if err != nil {
-		log2.GetLog().Error(err.Error())
+		log2.GetLog().Errorf(err.Error())
 		return "", false
 	}
 

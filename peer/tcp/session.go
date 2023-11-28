@@ -140,7 +140,7 @@ func (self *tcpSession) protectedReadMessage() (msg interface{}, err error) {
 	defer func() {
 
 		if err := recover(); err != nil {
-			log.GetLog().Error("IO panic: %s", err)
+			log.GetLog().Errorf("IO panic: %s", err)
 			self.Conn().Close()
 		}
 
@@ -185,7 +185,7 @@ func (self *tcpSession) recvLoop() {
 					}
 				}
 
-				log.GetLog().Error("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
+				log.GetLog().Errorf("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
 			}
 
 			self.sendQueue.Add(nil)
@@ -211,7 +211,7 @@ func (self *tcpSession) protectedSendMessage(ev cellnet.Event) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			log.GetLog().Error("IO send panic: %s %s", err, cellnet.MessageToName(ev.Message()))
+			log.GetLog().Errorf("IO send panic: %s %s", err, cellnet.MessageToName(ev.Message()))
 		}
 
 	}()

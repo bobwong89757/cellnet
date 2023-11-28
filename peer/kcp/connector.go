@@ -41,7 +41,7 @@ func (self *udpConnector) Start() cellnet.Peer {
 
 	if err != nil {
 
-		log.GetLog().Error("#resolve udp address failed(%s) %v", self.Name(), err.Error())
+		log.GetLog().Errorf("#resolve udp address failed(%s) %v", self.Name(), err.Error())
 		return self
 	}
 
@@ -70,7 +70,7 @@ func (self *udpConnector) connect() {
 		// 尝试用Socket连接地址
 		sess, err := kcp.DialWithOptions(self.remoteAddr.String(), nil, 0, 0)
 		if err != nil {
-			log.GetLog().Error("#udp.connect failed(%s) %v", self.Name(), err.Error())
+			log.GetLog().Errorf("#udp.connect failed(%s) %v", self.Name(), err.Error())
 			return
 		}
 
@@ -80,10 +80,10 @@ func (self *udpConnector) connect() {
 		if err != nil {
 
 			if self.tryConnTimes <= reportConnectFailedLimitTimes {
-				log.GetLog().Error("#kcp.connect failed(%s) %v", self.Name(), err.Error())
+				log.GetLog().Errorf("#kcp.connect failed(%s) %v", self.Name(), err.Error())
 
 				if self.tryConnTimes == reportConnectFailedLimitTimes {
-					log.GetLog().Error("(%s) continue reconnecting, but mute log", self.Name())
+					log.GetLog().Errorf("(%s) continue reconnecting, but mute log", self.Name())
 				}
 			}
 
@@ -190,7 +190,7 @@ func init() {
 		//	pInterface:     p,
 		//	CoreProcBundle: &p.CoreProcBundle,
 		//}
-		p.defaultSes = newSession(nil,p,func() {
+		p.defaultSes = newSession(nil, p, func() {
 			p.sesEndSignal.Done()
 		})
 

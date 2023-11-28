@@ -6,12 +6,12 @@ import (
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/codec"
 	_ "github.com/bobwong89757/cellnet/codec/json"
+	log2 "github.com/bobwong89757/cellnet/log"
 	"github.com/bobwong89757/cellnet/peer"
 	_ "github.com/bobwong89757/cellnet/peer/tcp"
 	"github.com/bobwong89757/cellnet/proc"
 	_ "github.com/bobwong89757/cellnet/proc/tcp"
 	"github.com/bobwong89757/cellnet/util"
-	"log"
 	"os"
 	"reflect"
 	"runtime/pprof"
@@ -118,9 +118,8 @@ func main() {
 
 	f, err := os.Create(*profile)
 	if err != nil {
-		log.GetLog().Println(*profile)
+		log2.GetLog().Errorln(*profile)
 	}
-
 
 	server()
 

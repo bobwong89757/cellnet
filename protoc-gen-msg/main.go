@@ -35,18 +35,18 @@ func main() {
 	// 读取protoc请求
 	data, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		log.GetLog().Error("reading input")
+		log.GetLog().Errorf("reading input")
 		os.Exit(1)
 	}
 
 	// 解析请求
 	if err := proto.Unmarshal(data, &Request); err != nil {
-		log.GetLog().Error("parsing input proto")
+		log.GetLog().Errorf("parsing input proto")
 		os.Exit(1)
 	}
 
 	if len(Request.FileToGenerate) == 0 {
-		log.GetLog().Error("no files to generate")
+		log.GetLog().Errorf("no files to generate")
 		os.Exit(1)
 	}
 

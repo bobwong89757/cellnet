@@ -29,7 +29,7 @@ func rpc_StartServer() {
 	proc.BindProcessorHandler(rpc_Acceptor, "tcp.ltv", func(ev cellnet.Event) {
 		switch msg := ev.Message().(type) {
 		case *TestEchoACK:
-			log.GetLog().Debug("server recv rpc ", *msg)
+			log.GetLog().Debugf("server recv rpc ", *msg)
 
 			ev.(interface {
 				Reply(interface{})
@@ -66,7 +66,7 @@ func syncRPC_OnClientEvent(ev cellnet.Event) {
 				}
 
 				msg := result.(*TestEchoACK)
-				log.GetLog().Debug("client sync recv:", msg.Msg, id*100)
+				log.GetLog().Debugf("client sync recv:", msg.Msg, id*100)
 
 				syncRPC_Signal.Done(id * 100)
 
@@ -93,7 +93,7 @@ func asyncRPC_OnClientEvent(ev cellnet.Event) {
 					asyncRPC_Signal.Log(v)
 					asyncRPC_Signal.FailNow()
 				case *TestEchoACK:
-					log.GetLog().Debug("client sync recv:", v.Msg)
+					log.GetLog().Debugf("client sync recv:", v.Msg)
 					asyncRPC_Signal.Done(copy)
 				}
 
@@ -121,7 +121,7 @@ func typeRPC_OnClientEvent(ev cellnet.Event) {
 					panic(err)
 				}
 
-				log.GetLog().Debug("client type sync recv:", ack)
+				log.GetLog().Debugf("client type sync recv:", ack)
 				typeRPC_Signal.Done(copy)
 
 			})

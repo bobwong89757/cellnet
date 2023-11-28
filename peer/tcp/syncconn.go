@@ -49,7 +49,7 @@ func (self *tcpSyncConnector) Start() cellnet.Peer {
 	// 发生错误时退出
 	if err != nil {
 
-		log.GetLog().Debug("#tcp.connect failed(%s)@%d address: %s", self.Name(), self.defaultSes.ID(), self.Address())
+		log.GetLog().Debugf("#tcp.connect failed(%s)@%d address: %s", self.Name(), self.defaultSes.ID(), self.Address())
 
 		self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self.defaultSes, Msg: &cellnet.SessionConnectError{}})
 		return self

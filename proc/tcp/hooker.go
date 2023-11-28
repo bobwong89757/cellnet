@@ -27,7 +27,7 @@ func (self MsgHooker) OnInboundEvent(inputEvent cellnet.Event) (outputEvent cell
 	inputEvent, handled, err = rpc.ResolveInboundEvent(inputEvent)
 
 	if err != nil {
-		log.GetLog().Error("rpc.ResolveInboundEvent:", err)
+		log.GetLog().Errorf("rpc.ResolveInboundEvent:", err)
 		return
 	}
 
@@ -36,7 +36,7 @@ func (self MsgHooker) OnInboundEvent(inputEvent cellnet.Event) (outputEvent cell
 		inputEvent, handled, err = relay.ResoleveInboundEvent(inputEvent)
 
 		if err != nil {
-			log.GetLog().Error("relay.ResoleveInboundEvent:", err)
+			log.GetLog().Errorf("relay.ResoleveInboundEvent:", err)
 			return
 		}
 
@@ -59,7 +59,7 @@ func (self MsgHooker) OnOutboundEvent(inputEvent cellnet.Event) (outputEvent cel
 	handled, err := rpc.ResolveOutboundEvent(inputEvent)
 
 	if err != nil {
-		log.GetLog().Error("rpc.ResolveOutboundEvent:", err)
+		log.GetLog().Errorf("rpc.ResolveOutboundEvent:", err)
 		return nil
 	}
 
@@ -68,7 +68,7 @@ func (self MsgHooker) OnOutboundEvent(inputEvent cellnet.Event) (outputEvent cel
 		handled, err = relay.ResolveOutboundEvent(inputEvent)
 
 		if err != nil {
-			log.GetLog().Error("relay.ResolveOutboundEvent:", err)
+			log.GetLog().Errorf("relay.ResolveOutboundEvent:", err)
 			return nil
 		}
 

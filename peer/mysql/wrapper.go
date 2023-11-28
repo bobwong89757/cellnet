@@ -24,12 +24,12 @@ func (self *Wrapper) Query(query string, args ...interface{}) *Wrapper {
 	}
 
 	self.query = query
-	log.GetLog().Debug("[DB]", query, args)
+	log.GetLog().Debugf("[DB]", query, args)
 
 	self.row, self.Err = self.drv.Query(query, args...)
 
 	if self.Err != nil {
-		log.GetLog().Error("[DB] ", self.query, self.Err.Error())
+		log.GetLog().Errorf("[DB] ", self.query, self.Err.Error())
 	}
 
 	return self
@@ -42,12 +42,12 @@ func (self *Wrapper) Execute(query string, args ...interface{}) *Wrapper {
 	}
 
 	self.query = query
-	log.GetLog().Debug("[DB]", query, args)
+	log.GetLog().Debugf("[DB]", query, args)
 
 	_, self.Err = self.drv.Exec(query, args...)
 
 	if self.Err != nil {
-		log.GetLog().Error("[DB] ", self.query, self.Err.Error())
+		log.GetLog().Errorf("[DB] ", self.query, self.Err.Error())
 	}
 
 	return self
@@ -71,7 +71,7 @@ func (self *Wrapper) One(data ...interface{}) *Wrapper {
 	self.Err = self.row.Scan(data...)
 
 	if self.Err != nil {
-		log.GetLog().Error("One.Row.Scan failed", self.query, self.Err)
+		log.GetLog().Errorf("One.Row.Scan failed", self.query, self.Err)
 	}
 
 	self.row.Close()
@@ -85,7 +85,7 @@ func (self *Wrapper) Scan(dest ...interface{}) {
 	self.Err = self.row.Scan(dest...)
 
 	if self.Err != nil {
-		log.GetLog().Error("Scan.Scan failed", self.query, self.Err)
+		log.GetLog().Errorf("Scan.Scan failed", self.query, self.Err)
 	}
 
 }

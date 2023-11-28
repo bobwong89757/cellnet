@@ -58,7 +58,7 @@ func (self *wsSession) protectedReadMessage() (msg interface{}, err error) {
 	defer func() {
 
 		if err := recover(); err != nil {
-			log.GetLog().Error("IO read panic: %s", err)
+			log.GetLog().Errorf("IO read panic: %s", err)
 			self.Close()
 		}
 
@@ -91,10 +91,10 @@ func (self *wsSession) recvLoop() {
 
 		if err != nil {
 
-			log.GetLog().Debug(err.Error())
+			log.GetLog().Debugf(err.Error())
 
 			if !util.IsEOFOrNetReadError(err) {
-				log.GetLog().Error("session closed:", err.Error())
+				log.GetLog().Errorf("session closed:", err.Error())
 			}
 
 			self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self, Msg: &cellnet.SessionClosed{}})

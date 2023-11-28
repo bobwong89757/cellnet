@@ -61,7 +61,7 @@ func (self *CoreSessionManager) Add(ses cellnet.Session) {
 	ses.(interface {
 		SetID(int64)
 	}).SetID(id)
-	log.GetLog().Warn("添加%d到sessMgr", id)
+	log.GetLog().Warnf("添加%d到sessMgr", id)
 	self.sesById.Store(id, ses)
 }
 

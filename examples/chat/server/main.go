@@ -25,10 +25,10 @@ func main() {
 		switch msg := ev.Message().(type) {
 		// 有新的连接
 		case *cellnet.SessionAccepted:
-			log.GetLog().Debug("server accepted")
+			log.GetLog().Debugf("server accepted")
 		// 有连接断开
 		case *cellnet.SessionClosed:
-			log.GetLog().Debug("session closed: ", ev.Session().ID())
+			log.GetLog().Debugf("session closed: ", ev.Session().ID())
 		// 收到某个连接的ChatREQ消息
 		case *proto.ChatREQ:
 

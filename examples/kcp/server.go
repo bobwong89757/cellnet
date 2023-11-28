@@ -32,14 +32,14 @@ func main() {
 
 		switch msg := ev.Message().(type) {
 		case *cellnet.SessionAccepted: // 接受一个连接
-			addr,has := util.GetRemoteAddrss(ev.Session())
-			log.GetLog().Debug("server accepted %s,%v",addr,has)
+			addr, has := util.GetRemoteAddrss(ev.Session())
+			log.GetLog().Debugf("server accepted %s,%v", addr, has)
 		case *proto.EchoAck: // 收到连接发送的消息
 
 			fmt.Printf("server recv %+v\n", msg)
 
 			ack := &proto.EchoAck{
-				Msg:   msg.Msg,
+				Msg: msg.Msg,
 				Ext: "5",
 			}
 

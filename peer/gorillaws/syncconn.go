@@ -48,7 +48,7 @@ func (self *wsSyncConnector) Start() cellnet.Peer {
 	// 发生错误时退出
 	if err != nil {
 
-		log.GetLog().Debug("#ws.connect failed(%s)@%d address: %s", self.Name(), self.defaultSes.ID(), self.Address())
+		log.GetLog().Debugf("#ws.connect failed(%s)@%d address: %s", self.Name(), self.defaultSes.ID(), self.Address())
 
 		self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self.defaultSes, Msg: &cellnet.SessionConnectError{}})
 		return self

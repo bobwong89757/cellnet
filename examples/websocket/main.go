@@ -54,7 +54,7 @@ func client() {
 		switch msg := ev.Message().(type) {
 
 		case *cellnet.SessionConnected:
-			log.GetLog().Debug("server connected")
+			log.GetLog().Debugf("server connected")
 
 			ev.Session().Send(&TestEchoACK{
 				Msg:   "鲍勃",
@@ -62,10 +62,10 @@ func client() {
 			})
 			// 有连接断开
 		case *cellnet.SessionClosed:
-			log.GetLog().Debug("session closed: ", ev.Session().ID())
+			log.GetLog().Debugf("session closed: ", ev.Session().ID())
 		case *TestEchoACK:
 
-			log.GetLog().Debug("recv: %+v %v", msg, []byte("鲍勃"))
+			log.GetLog().Debugf("recv: %+v %v", msg, []byte("鲍勃"))
 
 		}
 	})
@@ -92,19 +92,19 @@ func server() {
 		switch msg := ev.Message().(type) {
 
 		case *cellnet.SessionAccepted:
-			log.GetLog().Debug("server accepted")
+			log.GetLog().Debugf("server accepted")
 			// 有连接断开
 		case *cellnet.SessionClosed:
-			log.GetLog().Debug("session closed: ", ev.Session().ID())
+			log.GetLog().Debugf("session closed: ", ev.Session().ID())
 		case *TestEchoACK:
 
-			log.GetLog().Debug("recv: %+v %v", msg, []byte("鲍勃"))
+			log.GetLog().Debugf("recv: %+v %v", msg, []byte("鲍勃"))
 
 			val, exist := ev.Session().(cellnet.ContextSet).GetContext("request")
 			if exist {
 				if req, ok := val.(*http.Request); ok {
 					raw, _ := json.Marshal(req.Header)
-					log.GetLog().Debug("origin request header: %s", string(raw))
+					log.GetLog().Debugf("origin request header: %s", string(raw))
 				}
 			}
 

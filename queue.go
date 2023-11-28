@@ -119,7 +119,7 @@ func (self *eventQueue) StartLoop() EventQueue {
 				case nil:
 					break
 				default:
-					log.GetLog().Warn("unexpected type %T", t)
+					log.GetLog().Warnf("unexpected type %T", t)
 				}
 			}
 

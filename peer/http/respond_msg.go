@@ -56,7 +56,7 @@ func (self *MessageRespond) WriteRespond(ses *httpSession) error {
 		return err
 	}
 
-	log.GetLog().Debug("#http.send(%s) '%s' %s | [%d] %s",
+	log.GetLog().Debugf("#http.send(%s) '%s' %s | [%d] %s",
 		peerInfo.Name(),
 		ses.req.Method,
 		ses.req.URL.Path,

@@ -1,13 +1,15 @@
 package log
 
-import "github.com/bobwong89757/golog/logs"
+import (
+	"go.uber.org/zap"
+)
 
-var mLog *logs.BeeLogger
+var mLog *zap.SugaredLogger
 
-func SetLog(v *logs.BeeLogger) {
+func SetLog(v *zap.SugaredLogger) {
 	mLog = v
 }
 
-func GetLog() *logs.BeeLogger{
+func GetLog() *zap.SugaredLogger {
 	return mLog
 }

@@ -94,7 +94,7 @@ func (self *wsSession) recvLoop() {
 			log.GetLog().Debugf(err.Error())
 
 			if !util.IsEOFOrNetReadError(err) {
-				log.GetLog().Errorf("session closed:", err.Error())
+				log.GetLog().Errorf("session closed: %v", err.Error())
 			}
 
 			self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self, Msg: &cellnet.SessionClosed{}})

@@ -1,6 +1,6 @@
 module github.com/bobwong89757/cellnet
 
-go 1.13
+go 1.25
 
 require (
 	github.com/bobwong89757/golog v0.0.2
@@ -13,8 +13,22 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/mediocregopher/radix.v2 v0.0.0-20181115013041-b67df6e626f9
-	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
-	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
-	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.26.0 // indirect
+	github.com/rs/zerolog v1.34.0
+)
+
+require (
+	github.com/bobwong89757/golexer v0.1.0 // indirect
+	github.com/klauspost/cpuid/v2 v2.0.2 // indirect
+	github.com/klauspost/reedsolomon v1.9.11 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
+	github.com/templexxx/cpu v0.0.1 // indirect
+	github.com/templexxx/xorsimd v0.4.1 // indirect
+	github.com/tjfoc/gmsm v1.4.0 // indirect
+	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
+	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 )

@@ -1,15 +1,15 @@
 package log
 
 import (
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 )
 
-var mLog *zap.SugaredLogger
+var mLog *zerolog.Logger
 
-func SetLog(v *zap.SugaredLogger) {
+func SetLog(v *zerolog.Logger) {
 	mLog = v
 }
 
-func GetLog() *zap.SugaredLogger {
+func GetLog() *zerolog.Logger {
 	return mLog
 }

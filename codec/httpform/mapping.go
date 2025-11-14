@@ -7,8 +7,12 @@ import (
 	"time"
 )
 
-// from https://github.com/gin-gonic/gin
-
+// mapForm 将表单数据映射到结构体
+// 参考: https://github.com/gin-gonic/gin
+// ptr: 结构体指针
+// form: 表单数据映射（字段名 -> 值列表）
+// 支持嵌套结构体、切片、时间等类型
+// 使用 "form" tag 指定字段名，使用 "time_format" tag 指定时间格式
 func mapForm(ptr interface{}, form map[string][]string) error {
 	typ := reflect.TypeOf(ptr).Elem()
 	val := reflect.ValueOf(ptr).Elem()
@@ -65,6 +69,11 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 	return nil
 }
 
+// setWithProperType 根据类型设置字段值
+// valueKind: 字段的反射类型
+// val: 字符串值
+// structField: 结构体字段的反射值
+// 将字符串值转换为对应的类型并设置到字段中
 func setWithProperType(valueKind reflect.Kind, val string, structField reflect.Value) error {
 	switch valueKind {
 	case reflect.Int:
@@ -101,6 +110,11 @@ func setWithProperType(valueKind reflect.Kind, val string, structField reflect.V
 	return nil
 }
 
+// setIntField 设置整数字段值
+// val: 字符串值
+// bitSize: 整数位大小（0、8、16、32、64）
+// field: 字段的反射值
+// 将字符串解析为整数并设置到字段中，空字符串默认为 0
 func setIntField(val string, bitSize int, field reflect.Value) error {
 	if val == "" {
 		val = "0"
@@ -112,6 +126,11 @@ func setIntField(val string, bitSize int, field reflect.Value) error {
 	return err
 }
 
+// setUintField 设置无符号整数字段值
+// val: 字符串值
+// bitSize: 整数位大小（0、8、16、32、64）
+// field: 字段的反射值
+// 将字符串解析为无符号整数并设置到字段中，空字符串默认为 0
 func setUintField(val string, bitSize int, field reflect.Value) error {
 	if val == "" {
 		val = "0"
@@ -123,6 +142,10 @@ func setUintField(val string, bitSize int, field reflect.Value) error {
 	return err
 }
 
+// setBoolField 设置布尔字段值
+// val: 字符串值
+// field: 字段的反射值
+// 将字符串解析为布尔值并设置到字段中，空字符串默认为 false
 func setBoolField(val string, field reflect.Value) error {
 	if val == "" {
 		val = "false"
@@ -134,6 +157,11 @@ func setBoolField(val string, field reflect.Value) error {
 	return nil
 }
 
+// setFloatField 设置浮点数字段值
+// val: 字符串值
+// bitSize: 浮点位大小（32 或 64）
+// field: 字段的反射值
+// 将字符串解析为浮点数并设置到字段中，空字符串默认为 0.0
 func setFloatField(val string, bitSize int, field reflect.Value) error {
 	if val == "" {
 		val = "0.0"
@@ -145,6 +173,12 @@ func setFloatField(val string, bitSize int, field reflect.Value) error {
 	return err
 }
 
+// setTimeField 设置时间字段值
+// val: 字符串值
+// structField: 结构体字段的反射信息（用于获取 tag）
+// value: 字段的反射值
+// 根据 "time_format" tag 解析时间字符串并设置到字段中
+// 支持 "time_utc" 和 "time_location" tag 指定时区
 func setTimeField(val string, structField reflect.StructField, value reflect.Value) error {
 	timeFormat := structField.Tag.Get("time_format")
 	if timeFormat == "" {

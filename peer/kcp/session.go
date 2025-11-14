@@ -1,15 +1,16 @@
 package kcp
 
 import (
+	"net"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/log"
 	"github.com/bobwong89757/cellnet/peer"
 	"github.com/bobwong89757/cellnet/util"
 	"github.com/bobwong89757/kcp-go/v6"
-	"net"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 type DataReader interface {
@@ -45,6 +46,9 @@ type KcpSession struct {
 	kcpSession    *kcp.UDPSession
 	key           *connTrackKey
 	ForceCloseTag bool
+
+	// 接收缓冲区，复用避免频繁分配
+	recvBuffer []byte
 }
 
 func (self *KcpSession) SetKcpSession(udpSes *kcp.UDPSession) {
@@ -110,14 +114,19 @@ func (self *KcpSession) WriteData(data []byte) {
 		return
 	}
 
-	// Connector中的Session
-	if self.kcpSession.RemoteAddr() == nil {
-		c.Write(data)
-
-		// Acceptor中的Session
+	// Acceptor中的Session有RemoteAddr，Connector中的Session没有
+	if c.RemoteAddr() != nil {
+		// Acceptor中的Session，直接写入
+		_, err := c.Write(data)
+		if err != nil {
+			log.GetLog().Errorf("kcp write error, sesid: %d, err: %v", self.ID(), err)
+		}
 	} else {
-		self.kcpSession.Write(data)
-		//c.WriteToUDP(data, self.remote)
+		// Connector中的Session，也直接写入（KCP库会处理）
+		_, err := c.Write(data)
+		if err != nil {
+			log.GetLog().Errorf("kcp write error, sesid: %d, err: %v", self.ID(), err)
+		}
 	}
 }
 
@@ -157,12 +166,29 @@ func (self *KcpSession) protectedReadMessage() (msg interface{}, err error) {
 
 	defer func() {
 
-		if err := recover(); err != nil {
-			log.GetLog().Errorf("IO panic: %s", err)
-			self.kcpSession.Close()
+		if panicErr := recover(); panicErr != nil {
+			log.GetLog().Errorf("IO panic: %s", panicErr)
+			if c := self.GetKcpSession(); c != nil {
+				c.Close()
+			}
+			err = nil // 返回nil避免继续处理
 		}
 
 	}()
+
+	// 复用接收缓冲区
+	if self.recvBuffer == nil {
+		self.recvBuffer = make([]byte, MaxUDPRecvBuffer)
+	}
+
+	n, readErr := self.GetKcpSession().Read(self.recvBuffer)
+	if readErr != nil {
+		return nil, readErr
+	}
+
+	if n > 0 {
+		self.pkt = self.recvBuffer[:n]
+	}
 
 	msg, err = self.ReadMessage(self)
 
@@ -182,6 +208,11 @@ func (self *KcpSession) recvLoop() {
 		capturePanic = i.CaptureIOPanic()
 	}
 
+	// 初始化接收缓冲区
+	if self.recvBuffer == nil {
+		self.recvBuffer = make([]byte, MaxUDPRecvBuffer)
+	}
+
 	for !self.ForceCloseTag {
 
 		var msg interface{}
@@ -190,28 +221,29 @@ func (self *KcpSession) recvLoop() {
 		if capturePanic {
 			msg, err = self.protectedReadMessage()
 		} else {
-			recvBuff := make([]byte, MaxUDPRecvBuffer)
-			n, err := self.GetKcpSession().Read(recvBuff)
-			//n, err := self.KcpSession.Read(self.pkt)
-			if err != nil {
-				//log.GetLog().Errorf("%d kcp读取错误 %v", self.ID(),err)
+			// 复用接收缓冲区
+			n, readErr := self.GetKcpSession().Read(self.recvBuffer)
+			if readErr != nil {
+				if !util.IsEOFOrNetReadError(readErr) {
+					log.GetLog().Errorf("kcp read error, sesid: %d, err: %v", self.ID(), readErr)
+				}
 				self.Close()
-				continue
+				err = readErr
+			} else if n > 0 {
+				self.pkt = self.recvBuffer[:n]
+				msg, err = self.ReadMessage(self)
 			}
-			if n > 0 {
-				self.pkt = recvBuff[:n]
-			}
-
-			msg, err = self.ReadMessage(self)
-		}
-
-		if msg == nil {
-			continue
 		}
 
 		if err != nil {
 			if !util.IsEOFOrNetReadError(err) {
-				log.GetLog().Errorf("session closed, sesid: %d, err: %s", self.ID(), err)
+				var ip string
+				if c := self.GetKcpSession(); c != nil {
+					if addr := c.RemoteAddr(); addr != nil {
+						ip = addr.String()
+					}
+				}
+				log.GetLog().Errorf("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
 			}
 
 			self.sendQueue.Add(nil)
@@ -226,17 +258,35 @@ func (self *KcpSession) recvLoop() {
 			break
 		}
 
-		self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self, Msg: msg})
+		if msg != nil {
+			self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self, Msg: msg})
+		}
 	}
 
 	// 通知完成
 	self.exitSync.Done()
 }
 
+func (self *KcpSession) protectedSendMessage(ev cellnet.Event) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.GetLog().Errorf("IO send panic: %s %s", err, cellnet.MessageToName(ev.Message()))
+		}
+	}()
+
+	self.SendMessage(ev)
+}
+
 // 发送循环
 func (self *KcpSession) sendLoop() {
 
 	var writeList []interface{}
+	var capturePanic bool
+
+	if i, ok := self.Peer().(cellnet.PeerCaptureIOPanic); ok {
+		capturePanic = i.CaptureIOPanic()
+	}
 
 	for {
 		writeList = writeList[0:0]
@@ -245,7 +295,11 @@ func (self *KcpSession) sendLoop() {
 		// 遍历要发送的数据
 		for _, msg := range writeList {
 
-			self.SendMessage(&cellnet.SendMsgEvent{Ses: self, Msg: msg})
+			if capturePanic {
+				self.protectedSendMessage(&cellnet.SendMsgEvent{Ses: self, Msg: msg})
+			} else {
+				self.SendMessage(&cellnet.SendMsgEvent{Ses: self, Msg: msg})
+			}
 		}
 
 		if exit {
@@ -254,9 +308,10 @@ func (self *KcpSession) sendLoop() {
 	}
 
 	// 完整关闭
-	conn := self.GetKcpSession().GetConn()
-	if conn != nil {
-		conn.Close()
+	if c := self.GetKcpSession(); c != nil {
+		if conn := c.GetConn(); conn != nil {
+			conn.Close()
+		}
 	}
 
 	// 通知完成

@@ -1,13 +1,14 @@
 package kcp
 
 import (
+	"net"
+	"sync"
+	"time"
+
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/log"
 	"github.com/bobwong89757/cellnet/peer"
 	"github.com/bobwong89757/kcp-go/v6"
-	"net"
-	"sync"
-	"time"
 )
 
 type udpConnector struct {
@@ -70,14 +71,6 @@ func (self *udpConnector) connect() {
 		// 尝试用Socket连接地址
 		sess, err := kcp.DialWithOptions(self.remoteAddr.String(), nil, 0, 0)
 		if err != nil {
-			log.GetLog().Errorf("#udp.connect failed(%s) %v", self.Name(), err.Error())
-			return
-		}
-
-		self.defaultSes.SetKcpSession(sess)
-
-		// 发生错误时退出
-		if err != nil {
 
 			if self.tryConnTimes <= reportConnectFailedLimitTimes {
 				log.GetLog().Errorf("#kcp.connect failed(%s) %v", self.Name(), err.Error())
@@ -103,6 +96,9 @@ func (self *udpConnector) connect() {
 			// 继续连接
 			continue
 		}
+
+		// 连接成功，设置session
+		self.defaultSes.SetKcpSession(sess)
 
 		self.sesEndSignal.Add(1)
 
@@ -171,7 +167,17 @@ func (self *udpConnector) Port() int {
 		return 0
 	}
 
-	return conn.LocalAddr().(*net.TCPAddr).Port
+	addr := conn.LocalAddr()
+	if addr == nil {
+		return 0
+	}
+
+	udpAddr, ok := addr.(*net.UDPAddr)
+	if !ok {
+		return 0
+	}
+
+	return udpAddr.Port
 }
 
 const reportConnectFailedLimitTimes = 3

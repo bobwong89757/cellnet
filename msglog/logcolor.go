@@ -1,6 +1,8 @@
 package msglog
 
-// 使用github.com/bobwong89757/golog的cellnet配色方案
+// LogColorDefine 使用 github.com/bobwong89757/golog 的 cellnet 配色方案
+// 定义了不同日志类型的颜色规则，用于美化日志输出
+// 格式为 JSON，包含规则列表，每个规则指定文本匹配模式和颜色
 const LogColorDefine = `
 {
 	"Rule":[

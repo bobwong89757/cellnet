@@ -19,6 +19,11 @@ const (
 //	@return err
 func RecvPacket(pktData []byte) (msg interface{}, err error) {
 
+	// 检查最小包大小
+	if len(pktData) < BodySize+MsgIDSize {
+		return nil, nil
+	}
+
 	// 用小端格式读取Size
 	datasize := binary.LittleEndian.Uint16(pktData)
 
@@ -29,6 +34,12 @@ func RecvPacket(pktData []byte) (msg interface{}, err error) {
 
 	// 出错，等待下次数据
 	if datasize > MTU {
+		return nil, nil
+	}
+
+	// 检查实际数据长度是否足够
+	expectedLen := BodySize + MsgIDSize + int(datasize) - BodySize
+	if len(pktData) < expectedLen {
 		return nil, nil
 	}
 

@@ -9,23 +9,21 @@ import (
 	"strings"
 )
 
-// SpliteAddress
-//
-//	@Description: 将普通地址格式(host:port)拆分
-//	@param addr
-//	@return host
-//	@return port
-//	@return err
+// SpliteAddress 将普通地址格式(host:port)拆分为主机和端口
+// addr: 地址字符串，格式为 "host:port"
+// 返回主机名、端口号和错误信息
+// 如果地址格式无效，返回错误
 func SpliteAddress(addr string) (host string, port int, err error) {
-
 	var portStr string
 
+	// 使用标准库拆分主机和端口
 	host, portStr, err = net.SplitHostPort(addr)
 
 	if err != nil {
 		return "", 0, err
 	}
 
+	// 将端口字符串转换为整数
 	port, err = strconv.Atoi(portStr)
 
 	if err != nil {
@@ -35,33 +33,30 @@ func SpliteAddress(addr string) (host string, port int, err error) {
 	return
 }
 
-// JoinAddress
-//
-//	@Description: 将host和端口合并为(host:port)格式的地址
-//	@param host
-//	@param port
-//	@return string
+// JoinAddress 将主机和端口合并为(host:port)格式的地址
+// host: 主机名或 IP 地址
+// port: 端口号
+// 返回格式化的地址字符串
 func JoinAddress(host string, port int) string {
 	return fmt.Sprintf("%s:%d", host, port)
 }
 
-// RemoteAddr
-// @Description: 修复ws没有实现所有net.conn方法，导致无法获取客服端地址问题.
+// RemoteAddr 定义获取远程地址的接口
+// 用于修复 WebSocket 没有实现所有 net.Conn 方法，导致无法获取客户端地址的问题
 type RemoteAddr interface {
 	RemoteAddr() net.Addr
 }
 
-// GetRemoteAddrss
-//
-//	@Description: 获取session远程的地址
-//	@param ses
-//	@return string
-//	@return bool
+// GetRemoteAddrss 获取 Session 的远程地址
+// ses: 要获取远程地址的 Session
+// 返回远程地址字符串和是否成功获取
+// 如果 Session 为 nil 或无法获取地址，返回 false
 func GetRemoteAddrss(ses cellnet.Session) (string, bool) {
 	if ses == nil {
 		return "", false
 	}
 
+	// 尝试从原始连接获取远程地址
 	if c, ok := ses.Raw().(RemoteAddr); ok {
 		return c.RemoteAddr().String(), true
 	}
@@ -70,36 +65,43 @@ func GetRemoteAddrss(ses cellnet.Session) (string, bool) {
 }
 
 var (
-	ErrInvalidPortRange     = errors.New("invalid port range")
+	// ErrInvalidPortRange 表示端口范围无效的错误
+	ErrInvalidPortRange = errors.New("invalid port range")
+
+	// ErrInvalidAddressFormat 表示地址格式无效的错误
 	ErrInvalidAddressFormat = errors.New("invalid address format")
 )
 
-// Address
-// @Description: 支持地址范围的格式
+// Address 支持地址范围的地址格式
+// 可以表示一个地址范围，用于端口自动检测等功能
 type Address struct {
-	Scheme  string
-	Host    string
+	// Scheme 协议方案，如 "tcp"、"udp"、"http" 等
+	Scheme string
+
+	// Host 主机名或 IP 地址
+	Host string
+
+	// MinPort 最小端口号
 	MinPort int
+
+	// MaxPort 最大端口号
 	MaxPort int
-	Path    string
+
+	// Path 路径部分，用于 HTTP 等协议
+	Path string
 }
 
-// HostPortString
-//
-//	@Description: 返回(host:port)格式地址
-//	@receiver self
-//	@param port
-//	@return string
+// HostPortString 返回(host:port)格式的地址
+// port: 端口号
+// 返回格式化的地址字符串，不包含协议方案和路径
 func (self *Address) HostPortString(port int) string {
 	return fmt.Sprintf("%s:%d", self.Host, port)
 }
 
-// String
-//
-//	@Description: 返回scheme://host:port/path 格式地址
-//	@receiver self
-//	@param port
-//	@return string
+// String 返回完整的地址字符串
+// port: 端口号
+// 返回 scheme://host:port/path 格式的地址
+// 如果 Scheme 为空，则返回 host:port 格式
 func (self *Address) String(port int) string {
 	if self.Scheme == "" {
 		return self.HostPortString(port)

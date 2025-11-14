@@ -2,6 +2,7 @@ package kcp
 
 import (
 	"encoding/binary"
+	"fmt"
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/codec"
 	"github.com/bobwong89757/cellnet/peer/kcp"
@@ -39,7 +40,13 @@ func SendPacket(writer kcp.DataWriter, ctx cellnet.ContextSet, msg interface{}) 
 		msgID = meta.ID
 	}
 
-	pktData := make([]byte, BodySize+MsgIDSize+len(msgData))
+	// 计算包大小
+	pktSize := BodySize + MsgIDSize + len(msgData)
+	if pktSize > MTU {
+		return cellnet.NewErrorContext("message too large", fmt.Sprintf("%d > %d", pktSize, MTU))
+	}
+
+	pktData := make([]byte, pktSize)
 
 	// 写入消息长度做验证
 	binary.LittleEndian.PutUint16(pktData, uint16(MsgIDSize+len(msgData)))

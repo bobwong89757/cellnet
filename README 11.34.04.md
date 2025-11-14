@@ -68,6 +68,10 @@ cellnet经过多个版本的迭代，无论是作为初学者学习的范例，�
 
        增加并优化过的Protobuf的编码格式
 
+    - Sproto(https://github.com/bobwong89757/gosproto)
+
+       轻量级二进制协议, 常用于游戏开发
+
     可以通过codec包自行添加新的编码格式
 
 * 支持混合编码收发

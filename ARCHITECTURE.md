@@ -181,6 +181,40 @@ type EventQueue interface {
 }
 ```
 
+#### 实现说明
+
+**eventQueue 是 EventQueue 接口的默认实现**，基于 `Pipe` 实现，提供线程安全的事件队列功能。
+
+**核心组件：**
+
+1. **Pipe（底层数据管道）**
+   - 无界队列，用于存储和传递事件
+   - 使用 `sync.Mutex` 保护队列的并发访问
+   - 使用 `sync.Cond` 条件变量实现阻塞等待和唤醒机制
+   - `Add()` 操作非阻塞，立即返回
+   - `Pick()` 操作在队列为空时阻塞等待，有新事件时被唤醒
+
+2. **事件循环（独立 goroutine）**
+   - 通过 `StartLoop()` 在独立 goroutine 中启动
+   - 持续调用 `Pipe.Pick()` 从队列取出事件
+   - 使用 `protectedCall()` 执行回调，支持 panic 捕获
+
+3. **线程安全机制**
+   - 所有队列操作都通过 `sync.Mutex` 保护
+   - 使用条件变量实现高效的阻塞/唤醒机制
+   - 支持多个 goroutine 并发投递事件，事件循环串行处理
+
+**实现结构：**
+
+```go
+type eventQueue struct {
+    *Pipe                    // 底层数据管道（嵌入）
+    endSignal sync.WaitGroup // 等待事件循环退出的同步信号
+    capturePanic bool        // 是否启用异常捕获
+    onPanic CapturePanicNotifyFunc // panic 通知函数
+}
+```
+
 #### 处理模型
 
 通过 EventQueue 可以实现多种处理模型：
@@ -211,62 +245,368 @@ type MessageMeta struct {
 
 ## 消息处理流程
 
-### 完整流程
+### 接收流程（按协议区分）
+
+不同协议的接收方式不同，主要分为两类：
+
+#### 1. 面向连接的协议（TCP、KCP、WebSocket）
+
+这些协议每个连接有独立的 socket，接收循环在 **Session 层面**：
 
 ```text
 ┌─────────────┐
 │  网络数据   │
 └──────┬──────┘
        │
-       ↓
-┌─────────────────────┐
-│  Session.recvLoop   │  接收循环
-└──────┬──────────────┘
+       ↓ [1] 在独立的 goroutine 中持续循环
+┌─────────────────────────────────────────┐
+│  Session.recvLoop()                     │  接收循环（每个 Session 独立）
+│  (tcpSession.recvLoop / KcpSession.recvLoop / wsSession.recvLoop) │
+│                                         │
+│  调用: self.ReadMessage(self)          │
+└──────┬──────────────────────────────────┘
        │
-       ↓
-┌─────────────────────┐
-│ Transmitter         │  消息传输器
-│ OnRecvMessage       │  解码网络数据
-└──────┬──────────────┘
+       ↓ [2] 调用 CoreProcBundle.ReadMessage()
+┌─────────────────────────────────────────┐
+│  CoreProcBundle.ReadMessage(ses)        │  消息读取入口
+│                                         │
+│  调用: self.transmit.OnRecvMessage(ses) │
+└──────┬──────────────────────────────────┘
        │
-       ↓
-┌─────────────────────┐
-│ Hooker              │  事件钩子
-│ OnInboundEvent      │  入站事件处理
-└──────┬──────────────┘
+       ↓ [3] 调用具体的 Transmitter 实现
+┌─────────────────────────────────────────┐
+│  Transmitter.OnRecvMessage(ses)         │  消息传输器
+│  (TCPMessageTransmitter / KCPMessageTransmitter / WSMessageTransmitter) │
+│                                         │
+│  【步骤 3.1】从网络读取原始数据          │
+│  - TCP: 调用 util.RecvLTVPacket()      │
+│    * 读取 Length(2字节) → 读取 Type(2字节) → 读取 Value(n字节) │
+│  - KCP: 从 KCP Session 读取数据包       │
+│  - WebSocket: 调用 conn.ReadMessage()  │
+│    * 读取完整的 WebSocket 二进制消息帧   │
+│                                         │
+│  【步骤 3.2】解析封包格式，提取消息ID和数据 │
+│  - TCP: util.RecvLTVPacket() 解析 LTV 格式 │
+│    * 从包体中提取消息ID (Type字段)       │
+│    * 提取消息数据 (Value字段)            │
+│  - KCP: RecvPacket() 解析 LTV 格式      │
+│  - WebSocket: 从消息帧中提取消息ID(前2字节)和数据 │
+│                                         │
+│  【步骤 3.3】调用 Codec 解码消息数据     │
+│  - 调用: codec.DecodeMessage(msgID, msgData) │
+│  - 根据消息ID查找消息元信息 (MessageMeta) │
+│  - 使用对应的 Codec (Protobuf/JSON/Binary等) 解码 │
+│  - 返回解码后的消息对象 (msg interface{}) │
+│                                         │
+│  - 返回: (msg interface{}, err error)  │
+└──────┬──────────────────────────────────┘
        │
-       ↓
-┌─────────────────────┐
-│ EventQueue.Post     │  投递到事件队列
-└──────┬──────────────┘
+       ↓ [4] 返回到 recvLoop，收到解码后的消息对象
+┌─────────────────────────────────────────┐
+│  Session.recvLoop()                     │  接收循环（继续执行）
+│                                         │
+│  msg, err := self.ReadMessage(self)    │  ← 从步骤2返回，得到 msg
+│  if err != nil { ... }                 │  处理错误情况
+│                                         │
+│  创建: &RecvMsgEvent{Ses: self, Msg: msg} │
+│  调用: self.ProcEvent(ev)              │
+└──────┬──────────────────────────────────┘
        │
-       ↓
-┌─────────────────────┐
-│ EventCallback       │  用户回调处理
-└──────┬──────────────┘
+       ↓ [5] 调用 CoreProcBundle.ProcEvent()
+┌─────────────────────────────────────────┐
+│  CoreProcBundle.ProcEvent(ev)           │  事件处理入口
+│                                         │
+│  1. 调用: self.hooker.OnInboundEvent(ev) │
+└──────┬──────────────────────────────────┘
        │
-       ↓
-┌─────────────────────┐
-│ Session.Send        │  发送响应
-└──────┬──────────────┘
+       ↓ [6] 调用 Hooker 处理入站事件
+┌─────────────────────────────────────────┐
+│  Hooker.OnInboundEvent(ev)              │  事件钩子
+│  (MsgHooker.OnInboundEvent)             │
+│                                         │
+│  - 处理 RPC 请求/响应                   │
+│  - 处理 Relay 消息                      │
+│  - 记录接收日志                         │
+│  - 返回处理后的 Event（可能为 nil）      │
+└──────┬──────────────────────────────────┘
        │
-       ↓
-┌─────────────────────┐
-│ Hooker              │  事件钩子
-│ OnOutboundEvent     │  出站事件处理
-└──────┬──────────────┘
+       ↓ [7] 返回处理后的 Event
+┌─────────────────────────────────────────┐
+│  CoreProcBundle.ProcEvent(ev)           │
+│                                         │
+│  2. 如果 ev != nil:                    │
+│     调用: self.callback(ev)            │
+└──────┬──────────────────────────────────┘
        │
-       ↓
-┌─────────────────────┐
-│ Transmitter         │  消息传输器
-│ OnSendMessage       │  编码并发送
-└──────┬──────────────┘
+       ↓ [8] 调用队列化的回调函数
+┌─────────────────────────────────────────┐
+│  NewQueuedEventCallback(callback)       │  队列化回调包装器
+│                                         │
+│  调用: SessionQueuedCall(ev.Session(),  │
+│        func() { callback(ev) })        │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [9] 获取 Peer 的事件队列并投递
+┌─────────────────────────────────────────┐
+│  SessionQueuedCall()                    │  会话队列调用
+│                                         │
+│  获取: ses.Peer().Queue()              │
+│  调用: QueuedCall(queue, callback)     │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [10] 投递到事件队列
+┌─────────────────────────────────────────┐
+│  QueuedCall(queue, callback)            │  队列调用
+│                                         │
+│  if queue != nil:                      │
+│    调用: queue.Post(callback)          │
+│  else:                                 │
+│    立即执行: callback()                │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [11] 添加到 Pipe 队列（非阻塞）
+┌─────────────────────────────────────────┐
+│  EventQueue.Post(callback)              │  事件队列投递
+│  (eventQueue.Post)                      │
+│                                         │
+│  调用: self.Add(callback)              │
+│  (Pipe.Add - 添加到无界队列)            │
+│  - 将 callback 追加到队列列表           │
+│  - 通过条件变量通知等待的接收者         │
+│  - 立即返回，不阻塞调用者               │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [12] 事件循环从队列取出并执行（异步）
+┌─────────────────────────────────────────┐
+│  EventQueue.StartLoop()                 │  事件循环（独立 goroutine）
+│  (eventQueue.StartLoop)                 │
+│  【在应用启动时已启动，持续运行】         │
+│                                         │
+│  for {                                 │
+│    - 调用: self.Pick(&writeList)       │
+│      * 如果队列为空，阻塞等待（条件变量） │
+│      * 当有新事件时被唤醒，取出所有事件   │
+│    - 遍历 writeList 中的每个 callback  │
+│    - 调用: self.protectedCall(callback) │
+│      * 执行回调函数（带 panic 保护）     │
+│  }                                     │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [13] 执行用户回调
+┌─────────────────────────────────────────┐
+│  EventCallback(ev)                      │  用户注册的回调函数
+│  (用户业务逻辑处理)                      │
+│                                         │
+│  - 处理消息                             │
+│  - 可以调用: ev.Session().Send(msg)    │
+└─────────────────────────────────────────┘
+```
+
+**详细调用链：**
+
+1. **Session.recvLoop()** - 在 Session 启动时创建的独立 goroutine 中运行，持续循环（TCP/KCP/WebSocket 都有）
+2. **CoreProcBundle.ReadMessage()** - Session 嵌入的 CoreProcBundle 提供的方法，内部调用 transmit.OnRecvMessage()
+3. **Transmitter.OnRecvMessage()** - 由 Processor 注册的具体实现（TCPMessageTransmitter/KCPMessageTransmitter/WSMessageTransmitter）
+   - 3.1 从网络读取原始数据（TCP: util.RecvLTVPacket / KCP: 从 KCP Session / WebSocket: conn.ReadMessage）
+   - 3.2 解析封包格式，提取消息ID和消息数据
+   - 3.3 调用 `codec.DecodeMessage(msgID, msgData)` 解码消息数据，根据消息ID查找 MessageMeta，使用对应的 Codec 解码，返回消息对象
+4. **返回到 Session.recvLoop()** - OnRecvMessage() 返回后，recvLoop 收到解码后的消息对象，创建 RecvMsgEvent 并调用 ProcEvent
+5. **CoreProcBundle.ProcEvent()** - 事件处理入口，先调用 Hooker
+6. **Hooker.OnInboundEvent()** - 处理 RPC、Relay、日志等，返回处理后的 Event
+7. **CoreProcBundle.ProcEvent()** - 如果 Event 不为 nil，调用 callback
+8. **NewQueuedEventCallback** - 由 Processor 注册时包装的队列化回调
+9. **SessionQueuedCall()** - 获取 Session 对应 Peer 的事件队列
+10. **QueuedCall()** - 判断是否有队列，有则调用 queue.Post()，无则立即执行 callback
+11. **EventQueue.Post()** - 将回调函数添加到 Pipe 队列（非阻塞），通过条件变量通知等待的接收者
+12. **EventQueue.StartLoop()** - 事件循环在独立 goroutine 中持续运行（应用启动时已启动），调用 Pipe.Pick() 阻塞等待新事件，当有新事件时被唤醒并取出执行
+13. **EventCallback** - 最终执行用户注册的回调函数
+
+#### 2. 无连接协议（UDP）
+
+UDP 协议一个 socket 接收多个源的数据包，接收循环在 **Peer 层面**：
+
+```text
+┌─────────────┐
+│  网络数据   │
+└──────┬──────┘
+       │
+       ↓ [1] 在 Acceptor/Connector 的 goroutine 中循环
+┌─────────────────────────────────────────┐
+│  Peer.accept() / Peer.connect()        │  接收循环（在 Peer 中）
+│  (udpAcceptor.accept / udpConnector.connect) │
+│                                         │
+│  - 从 UDP socket 读取数据包             │
+│  - 获取源地址 (remoteAddr)              │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [2] 根据地址获取或创建 Session
+┌─────────────────────────────────────────┐
+│  Peer.getSession(remoteAddr)            │  获取 Session
+│  (udpAcceptor.getSession)               │
+│                                         │
+│  - 根据地址查找或创建 Session            │
+│  - 更新 Session 超时时间                │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [3] 调用 Session 的接收方法
+┌─────────────────────────────────────────┐
+│  Session.Recv(data)                     │  接收数据包
+│  (udpSession.Recv)                      │
+│                                         │
+│  - 保存数据包到 pkt                     │
+│  - 调用: self.ReadMessage(self)        │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [4] 后续流程与 TCP 相同
+┌─────────────────────────────────────────┐
+│  CoreProcBundle.ReadMessage()           │  → [步骤 2-13 与 TCP 相同]
+│  Transmitter.OnRecvMessage()            │
+│  CoreProcBundle.ProcEvent()             │
+│  Hooker.OnInboundEvent()                │
+│  EventQueue.Post()                      │
+│  EventCallback()                        │
+└─────────────────────────────────────────┘
+```
+
+**关键差异说明：**
+
+- **TCP/KCP/WebSocket**：每个 Session 有独立的 `recvLoop()` goroutine，持续从连接读取数据
+  - **TCP**：使用 TCP socket，LTV（Length-Type-Value）封包格式
+    - **LTV 格式**：Length(2字节) + Type(2字节消息ID) + Value(n字节消息数据)
+    - **为什么需要长度字段**：TCP 是流式协议，多个消息可能粘在一起，需要长度字段来区分消息边界
+  - **KCP**：基于 UDP 的可靠连接，LTV 封包格式
+    - **为什么需要长度字段**：虽然底层 UDP 是数据报协议（每个 UDP 包都是独立的），但 KCP 在 UDP 之上实现了可靠传输，提供给应用层的接口是**流式的**（类似 TCP）
+    - KCP 的 `Read()` 方法返回的是字节流，不是完整的数据报，可能会将多个应用层消息合并到一个 UDP 数据包，或者将一个大的应用层消息分割成多个 UDP 数据包
+    - 因此需要长度字段来区分应用层消息的边界，解决类似 TCP 的粘包问题
+  - **WebSocket**：使用 WebSocket 连接，二进制消息格式（2字节消息ID + 消息数据）
+    - **为什么不需要长度字段**：WebSocket 协议在应用层已经保证了消息的完整性，每次 `ReadMessage()` 都会返回一个完整的消息帧，不会出现粘包问题，因此不需要额外的长度字段
+- **UDP**：在 Acceptor/Connector 层面运行接收循环，根据数据包的源地址获取或创建对应的 Session，然后调用 `Session.Recv()` 方法处理
+- **后续流程统一**：UDP 从 `Session.Recv()` 之后的流程与 TCP/KCP/WebSocket 完全相同
+
+### 发送流程（统一）
+
+所有协议的发送流程都是统一的，但实现细节略有不同：
+
+#### TCP/KCP/WebSocket 发送流程
+
+```text
+┌─────────────────────────────────────────┐
+│  Session.Send(msg)                      │  用户调用发送接口
+│  (tcpSession.Send / KcpSession.Send / wsSession.Send) │
+│                                         │
+│  调用: self.sendQueue.Add(msg)         │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [1] 添加到发送队列
+┌─────────────────────────────────────────┐
+│  sendQueue.Add(msg)                     │  发送队列（Pipe）
+│  (Pipe.Add)                             │
+│                                         │
+│  - 非阻塞添加到队列                     │
+│  - 通知 sendLoop 有新消息               │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [2] 发送循环从队列取出消息
+┌─────────────────────────────────────────┐
+│  Session.sendLoop()                     │  发送循环（独立 goroutine）
+│  (tcpSession.sendLoop / KcpSession.sendLoop / wsSession.sendLoop) │
+│                                         │
+│  - 循环调用: sendQueue.Pick(&writeList) │
+│  - 遍历消息列表                         │
+│  - 调用: self.SendMessage(ev)          │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [3] 创建发送事件并处理
+┌─────────────────────────────────────────┐
+│  Session.sendLoop()                     │
+│                                         │
+│  创建: &SendMsgEvent{Ses: self, Msg: msg} │
+│  调用: self.SendMessage(ev)            │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [4] 调用 CoreProcBundle.SendMessage()
+┌─────────────────────────────────────────┐
+│  CoreProcBundle.SendMessage(ev)         │  消息发送入口
+│                                         │
+│  1. 调用: self.hooker.OnOutboundEvent(ev) │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [5] 调用 Hooker 处理出站事件
+┌─────────────────────────────────────────┐
+│  Hooker.OnOutboundEvent(ev)             │  事件钩子
+│  (MsgHooker.OnOutboundEvent)            │
+│                                         │
+│  - 处理 RPC 请求/响应                   │
+│  - 处理 Relay 消息                      │
+│  - 记录发送日志                         │
+│  - 返回处理后的 Event（可能为 nil）      │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [6] 返回处理后的 Event
+┌─────────────────────────────────────────┐
+│  CoreProcBundle.SendMessage(ev)         │
+│                                         │
+│  2. 如果 ev != nil && transmit != nil: │
+│     调用: self.transmit.OnSendMessage(  │
+│            ev.Session(), ev.Message())  │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [7] 调用具体的 Transmitter 实现
+┌─────────────────────────────────────────┐
+│  Transmitter.OnSendMessage(ses, msg)    │  消息传输器
+│  (TCPMessageTransmitter / KCPMessageTransmitter / WSMessageTransmitter) │
+│                                         │
+│  - TCP/KCP: 编码消息为 LTV 格式数据包    │
+│    * 格式: Length(2字节) + Type(2字节) + Value(n字节) │
+│    * 长度字段用于接收端正确解析消息边界   │
+│  - WebSocket: 编码消息为二进制格式（2字节消息ID + 消息数据） │
+│    * 格式: Type(2字节消息ID) + Value(n字节消息数据) │
+│    * WebSocket 协议层自动处理消息边界，无需长度字段 │
+│  - 写入网络连接                         │
+└──────┬──────────────────────────────────┘
        │
        ↓
 ┌─────────────┐
 │  网络数据   │
 └─────────────┘
 ```
+
+#### UDP 发送流程
+
+```text
+┌─────────────────────────────────────────┐
+│  Session.Send(msg)                      │  用户调用发送接口
+│  (udpSession.Send)                      │
+│                                         │
+│  直接调用: self.SendMessage(ev)        │
+│  (不经过队列，立即发送)                  │
+└──────┬──────────────────────────────────┘
+       │
+       ↓ [1] 后续流程与 TCP 相同
+┌─────────────────────────────────────────┐
+│  CoreProcBundle.SendMessage()           │  → [步骤 4-7 与 TCP 相同]
+│  Hooker.OnOutboundEvent()               │
+│  Transmitter.OnSendMessage()            │
+└─────────────────────────────────────────┘
+       │
+       ↓
+┌─────────────┐
+│  网络数据   │
+└─────────────┘
+```
+
+**发送流程关键差异：**
+
+- **TCP/KCP/WebSocket**：使用发送队列（sendQueue），消息先入队，由 `sendLoop()` 异步发送
+  - **TCP**：LTV 格式封包（Length + Type + Value）
+    - 需要长度字段，因为 TCP 是流式协议，发送端需要明确告知接收端消息长度
+  - **KCP**：LTV 格式封包（基于 UDP 的可靠传输）
+    - 需要长度字段，因为 KCP 虽然基于 UDP（数据报协议），但它实现了可靠传输，提供给应用层的接口是流式的
+    - KCP 的 `Read()` 方法返回字节流，可能包含多个应用层消息或部分消息，需要长度字段来区分消息边界
+  - **WebSocket**：二进制消息格式（Type + Value，无长度字段）
+    - 不需要长度字段，WebSocket 协议层会自动处理消息边界，`WriteMessage()` 会将整个消息作为一个完整的 WebSocket 帧发送
+- **UDP**：直接调用 `SendMessage()`，立即编码并发送，不使用队列
+- **后续处理统一**：都经过 Hooker 处理和 Transmitter 编码发送
 
 ## 高级特性
 

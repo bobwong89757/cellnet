@@ -310,28 +310,155 @@ Cellnet 内置消息日志功能，可以方便地查看收发消息的每个字
 cellnet/
 ├── codec/              # 编码支持
 │   ├── binary/        # 二进制编码
+│   │   └── binary.go  # Binary 编码器实现，使用 goobjfmt 进行内存流序列化
 │   ├── json/          # JSON 编码
+│   │   └── json.go    # JSON 编码器实现，用于 JSON 格式消息编解码
 │   ├── gogopb/        # Protobuf 编码
+│   │   └── gogopb.go  # Google Protocol Buffers 编码器实现（gogo 版本）
 │   ├── protoplus/     # ProtoPlus 编码
+│   │   └── protoplus.go # ProtoPlus 编码器实现，优化的 Protobuf 编码格式
 │   ├── sproto/        # Sproto 编码
-│   └── httpform/      # HTTP 表单编码
+│   │   └── sproto.go  # Sproto 编码器实现，轻量级二进制协议
+│   ├── httpform/      # HTTP 表单编码
+│   │   ├── form.go    # HTTP 表单编码器实现
+│   │   └── mapping.go # HTTP 表单字段映射工具
+│   ├── httpjson/      # HTTP JSON 编码
+│   │   └── json.go    # HTTP JSON 编码器实现
+│   ├── codecreg.go    # 编码器注册管理，提供 RegisterCodec、GetCodec 等函数
+│   └── msgcodec.go    # 消息编解码工具函数，提供 EncodeMessage、DecodeMessage 等
 ├── peer/              # 传输层实现
 │   ├── tcp/           # TCP 端实现
+│   │   ├── acceptor.go    # TCP 服务器端（Acceptor），接受客户端连接
+│   │   ├── connector.go   # TCP 客户端（Connector），连接到服务器，支持自动重连
+│   │   ├── session.go     # TCP 会话实现，管理单个 TCP 连接
+│   │   └── syncconn.go    # TCP 同步连接器，提供同步连接接口
 │   ├── udp/           # UDP 端实现
+│   │   ├── acceptor.go    # UDP 服务器端（Acceptor），接受 UDP 数据包
+│   │   ├── connector.go   # UDP 客户端（Connector），发送 UDP 数据包
+│   │   ├── session.go     # UDP 会话实现，管理 UDP 连接状态
+│   │   └── trackkey.go    # UDP 连接跟踪键，用于识别 UDP 连接
 │   ├── http/          # HTTP 端实现
-│   ├── gorillaws/     # WebSocket 端实现
-│   └── kcp/           # KCP 端实现
+│   │   ├── acceptor.go        # HTTP 服务器端（Acceptor），处理 HTTP 请求
+│   │   ├── connector.go       # HTTP 客户端（Connector），发送 HTTP 请求
+│   │   ├── session.go         # HTTP 会话实现，封装 HTTP 请求/响应
+│   │   ├── file.go            # HTTP 文件服务支持
+│   │   ├── respond_html.go    # HTTP HTML 响应工具
+│   │   ├── respond_msg.go     # HTTP 消息响应工具
+│   │   └── respond_status.go  # HTTP 状态码响应工具
+│   ├── gorillaws/     # WebSocket 端实现（基于 gorilla/websocket）
+│   │   ├── acceptor.go    # WebSocket 服务器端（Acceptor）
+│   │   ├── connector.go   # WebSocket 客户端（Connector）
+│   │   ├── session.go     # WebSocket 会话实现
+│   │   └── syncconn.go    # WebSocket 同步连接器
+│   ├── kcp/           # KCP 端实现（可靠 UDP）
+│   │   ├── acceptor.go    # KCP 服务器端（Acceptor）
+│   │   ├── connector.go   # KCP 客户端（Connector）
+│   │   ├── session.go     # KCP 会话实现
+│   │   ├── syncconn.go    # KCP 同步连接器
+│   │   └── trackkey.go    # KCP 连接跟踪键
+│   ├── mysql/         # MySQL 数据库连接
+│   │   ├── connector.go   # MySQL 连接器实现
+│   │   └── wrapper.go     # MySQL 连接包装器
+│   ├── redix/         # Redis 连接
+│   │   └── connector.go   # Redis 连接器实现
+│   ├── peerreg.go         # Peer 注册管理，提供 RegisterPeerCreator、NewPeer 等函数
+│   ├── peerprop.go        # Peer 基础属性实现（CorePeerProperty）
+│   ├── property.go        # Peer 属性接口定义
+│   ├── sesmgr.go          # 会话管理器实现（CoreSessionManager），管理所有 Session
+│   ├── sesidentify.go     # 会话标识符管理
+│   ├── procbundle.go      # 处理器资源包接口和实现
+│   ├── socketoption.go    # Socket 选项接口（TCP/UDP Socket 配置）
+│   ├── iopanic.go         # IO 层异常捕获接口和实现
+│   ├── runningtag.go      # 运行状态标记接口和实现
+│   ├── sysmsgreg.go       # 系统消息注册
+│   ├── redisparam.go      # Redis 参数配置
+│   └── sqlparam.go        # SQL 参数配置
 ├── proc/              # 处理器实现
 │   ├── tcp/           # TCP 处理器
+│   │   ├── setup.go       # TCP 处理器设置，注册 "tcp.ltv" 处理器
+│   │   ├── transmitter.go # TCP 消息传输器，实现 LTV（Length-Type-Value）封包
+│   │   └── hooker.go      # TCP 事件钩子，处理连接事件
 │   ├── udp/           # UDP 处理器
+│   │   ├── setup.go       # UDP 处理器设置，注册 "udp.ltv" 处理器
+│   │   ├── recv.go        # UDP 消息接收处理
+│   │   └── send.go        # UDP 消息发送处理
+│   ├── kcp/           # KCP 处理器
+│   │   ├── setup.go       # KCP 处理器设置，注册 "kcp.ltv" 处理器
+│   │   ├── recv.go        # KCP 消息接收处理
+│   │   ├── send.go        # KCP 消息发送处理
+│   │   └── hooker.go      # KCP 事件钩子
 │   ├── http/          # HTTP 处理器
-│   └── gorillaws/     # WebSocket 处理器
+│   │   └── setup.go       # HTTP 处理器设置，注册 "http" 处理器
+│   ├── gorillaws/     # WebSocket 处理器
+│   │   ├── setup.go       # WebSocket 处理器设置，注册 "gorillaws.ltv" 处理器
+│   │   ├── transmitter.go # WebSocket 消息传输器
+│   │   └── hooker.go      # WebSocket 事件钩子
+│   ├── procreg.go         # 处理器注册管理，提供 RegisterProcessor、BindProcessorHandler 等函数
+│   ├── procbundle.go      # 处理器资源包接口定义
+│   ├── msgdispatcher.go   # 消息派发器，根据消息类型自动派发到处理函数
+│   └── syncrecv.go        # 同步接收处理
 ├── rpc/               # RPC 支持
+│   ├── req.go             # RPC 请求核心实现，管理 RPC 请求生命周期
+│   ├── req_sync.go        # 同步 RPC 调用实现
+│   ├── req_async.go       # 异步 RPC 调用实现
+│   ├── req_type.go        # RPC 请求类型定义
+│   ├── event.go           # RPC 事件定义
+│   ├── proc.go            # RPC 处理器，处理 RPC 请求和响应
+│   ├── util.go            # RPC 工具函数
+│   ├── msg.go             # RPC 消息定义
+│   ├── msg.proto          # RPC 消息 Protobuf 定义
+│   └── msg_gen.go         # RPC 消息生成的代码
 ├── relay/             # 消息接力
+│   ├── relay.go           # 消息转发核心实现，支持服务器间消息传递
+│   ├── broadcast.go       # 消息广播功能
+│   ├── event.go           # Relay 事件定义
+│   ├── proc.go            # Relay 处理器，处理转发消息
+│   ├── msg.proto          # Relay 消息 Protobuf 定义
+│   └── msg_gen.go         # Relay 消息生成的代码
 ├── timer/             # 定时器
+│   ├── loop.go            # 循环定时器实现（Loop），支持持续 Tick 循环
+│   ├── after.go           # 延迟执行定时器实现（After），支持单次延迟执行
+│   └── loop_test.go       # 定时器测试代码
 ├── msglog/            # 消息日志
+│   ├── proc.go            # 消息日志处理器，记录收发消息的详细信息
+│   ├── blocker.go         # 消息日志阻塞器，控制哪些消息需要记录
+│   ├── logcolor.go        # 消息日志颜色输出
+│   └── listbase.go        # 消息日志列表基础实现
 ├── util/              # 工具库
-└── examples/          # 示例代码
+│   ├── addr.go            # 地址处理工具，拆分和组合网络地址
+│   ├── codec.go           # 编解码工具函数
+│   ├── ioutil.go          # IO 工具函数
+│   ├── packet.go          # 数据包处理工具
+│   ├── queue.go           # 队列工具函数
+│   ├── sys.go             # 系统工具函数
+│   ├── kvfile.go          # 键值对文件读写工具
+│   └── *_test.go          # 各工具函数的测试代码
+├── log/               # 日志框架
+│   └── framework_log.go   # 日志框架实现，基于 zap，提供统一的日志接口
+├── protoc-gen-msg/    # 代码生成工具
+│   ├── main.go            # Protobuf 消息代码生成器主程序
+│   └── file.go            # 文件生成工具
+├── examples/          # 示例代码
+│   ├── chat/              # 聊天服务器示例
+│   ├── echo/              # Echo 服务器示例（支持同步/异步 RPC）
+│   ├── fileserver/        # 文件服务器示例
+│   ├── kcp/               # KCP 协议示例
+│   └── websocket/         # WebSocket 示例
+├── peer.go            # Peer 接口定义（Peer、PeerProperty、SessionAccessor 等）
+├── session.go         # Session 接口定义和 RawPacket 实现
+├── processor.go       # Processor 相关接口定义（MessageTransmitter、EventHooker 等）
+├── event.go           # Event 接口定义和事件类型（RecvMsgEvent、SendMsgEvent 等）
+├── queue.go           # EventQueue 接口定义和实现（事件队列）
+├── meta.go            # MessageMeta 消息元信息管理和注册
+├── codec.go           # Codec 接口定义
+├── pipe.go            # Pipe 无界队列实现，EventQueue 的底层实现
+├── err.go             # Error 错误类型定义
+├── sysmsg.go          # 系统消息定义（SessionAccepted、SessionConnected 等）
+├── peer_tcp.go        # TCP Peer 便捷创建函数
+├── peer_udp.go        # UDP Peer 便捷创建函数
+├── peer_http.go       # HTTP Peer 便捷创建函数
+├── peer_ws.go         # WebSocket Peer 便捷创建函数
+└── peer_db.go         # 数据库 Peer 便捷创建函数
 ```
 
 ## 扩展机制

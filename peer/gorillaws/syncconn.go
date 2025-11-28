@@ -1,14 +1,16 @@
 package gorillaws
 
 import (
+	"fmt"
+	"net"
+	"net/http"
+	"time"
+
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/log"
 	"github.com/bobwong89757/cellnet/peer"
+	"github.com/bobwong89757/cellnet/util"
 	"github.com/gorilla/websocket"
-	"net"
-	"net/http"
-	"strings"
-	"time"
 )
 
 // wsSyncConnector
@@ -38,9 +40,19 @@ func (self *wsSyncConnector) Start() cellnet.Peer {
 	dialer.Proxy = http.ProxyFromEnvironment
 	dialer.HandshakeTimeout = 45 * time.Second
 
+	addrObj, err := util.ParseAddress(self.Address())
+	if err != nil {
+		log.GetLog().Errorf("invalid address: %s", self.Address())
+		self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self.defaultSes, Msg: &cellnet.SessionConnectError{}})
+		return self
+	}
+
+	// 处理非法路径问题
 	var finalAddress string
-	if !strings.HasPrefix(self.Address(), "ws://") {
-		finalAddress = "ws://" + self.Address()
+	if addrObj.Scheme == "ws" || addrObj.Scheme == "wss" {
+		finalAddress = self.Address()
+	} else {
+		finalAddress = "ws://" + fmt.Sprintf("%s:%d%s", addrObj.Host, addrObj.MinPort, addrObj.Path)
 	}
 
 	conn, _, err := dialer.Dial(finalAddress, nil)

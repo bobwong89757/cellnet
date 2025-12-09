@@ -220,17 +220,8 @@ type eventQueue struct {
 通过 EventQueue 可以实现多种处理模型：
 
 1. **单线程异步模型**：适用于 MMORPG 等复杂交互场景，免加锁处理共享数据
-```
-设置queue为全局queue,回调传入NewQueuedEventCallback
-```
 2. **多线程同步模型**：适用于机器人逻辑，每个机器人独立 goroutine
-```
-设置queue为nil,每个连接都会启动一个新的queue实现多线程,回调传入NewQueuedEventCallback
-```
 3. **多线程并发模型**：适用于网关、消息转发、HTTP 服务器
-```
-这是queue为nil,每个连接都会启动一个新的queue实现多线程,回调直接设置
-```
 
 ### 6. MessageMeta（消息元信息）
 

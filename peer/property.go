@@ -118,14 +118,3 @@ func (self *CoreContextSet) SetContext(key, v interface{}) {
 	// 添加新的上下文数据
 	self.ctxes = append(self.ctxes, ctx{key, v})
 }
-
-// Clear 清空所有上下文数据
-// 释放所有存储的键值对，用于会话关闭时清理资源
-// 线程安全，支持并发调用
-func (self *CoreContextSet) Clear() {
-	self.ctxesGuard.Lock()
-	defer self.ctxesGuard.Unlock()
-
-	// 清空上下文列表
-	self.ctxes = nil
-}

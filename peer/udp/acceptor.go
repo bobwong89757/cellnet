@@ -1,13 +1,12 @@
 package udp
 
 import (
-	"net"
-	"time"
-
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/log"
 	"github.com/bobwong89757/cellnet/peer"
 	"github.com/bobwong89757/cellnet/util"
+	"net"
+	"time"
 )
 
 // MaxUDPRecvBuffer UDP 接收缓冲区最大大小
@@ -18,12 +17,12 @@ const MaxUDPRecvBuffer = 2048
 // 用于创建 UDP 服务器，接受客户端数据包
 // UDP 是无连接协议，需要基于地址管理 Session
 type udpAcceptor struct {
-	peer.CoreSessionManager // 会话管理器，用于管理所有客户端连接
-	peer.CorePeerProperty   // 核心 Peer 属性（名称、地址、队列等）
-	peer.CoreContextSet     // 上下文数据存储
-	peer.CoreRunningTag     // 运行状态标记
-	peer.CoreProcBundle     // 消息处理组件（编码器、钩子、回调等）
-	peer.CoreCaptureIOPanic // IO 层 panic 捕获控制
+	peer.CoreSessionManager  // 会话管理器，用于管理所有客户端连接
+	peer.CorePeerProperty    // 核心 Peer 属性（名称、地址、队列等）
+	peer.CoreContextSet      // 上下文数据存储
+	peer.CoreRunningTag      // 运行状态标记
+	peer.CoreProcBundle      // 消息处理组件（编码器、钩子、回调等）
+	peer.CoreCaptureIOPanic  // IO 层 panic 捕获控制
 
 	// conn UDP 连接
 	// 用于接收和发送 UDP 数据包
@@ -184,8 +183,6 @@ func (self *udpAcceptor) checkTimeoutSession() {
 
 		// 删除超时的 Session
 		for _, ses := range sesToDelete {
-			// 清理上下文数据
-			ses.CoreContextSet.Clear()
 			delete(self.sesByConnTrack, *ses.key)
 		}
 

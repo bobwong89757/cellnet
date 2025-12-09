@@ -2,11 +2,10 @@ package http
 
 import (
 	"errors"
-	"html/template"
-	"net/http"
-
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/peer"
+	"html/template"
+	"net/http"
 )
 
 // RequestMatcher 请求匹配器接口
@@ -99,10 +98,7 @@ func (self *httpSession) ID() int64 {
 
 // Close 关闭会话
 // HTTP Session 的关闭是空操作（HTTP 是无状态协议）
-// 但会清理上下文数据以释放资源
 func (self *httpSession) Close() {
-	// 清理上下文数据
-	self.CoreContextSet.Clear()
 }
 
 // Peer 获取所属的 Peer

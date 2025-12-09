@@ -142,9 +142,6 @@ func (self *KcpSession) Close() {
 	// 将会话从管理器移除
 	self.Peer().(peer.SessionManager).Remove(self)
 
-	// 清理上下文数据
-	self.CoreContextSet.Clear()
-
 	if self.endNotify != nil {
 		self.endNotify()
 	}
@@ -339,9 +336,6 @@ func (self *KcpSession) Start() {
 
 		// 将会话从管理器移除
 		self.Peer().(peer.SessionManager).Remove(self)
-
-		// 清理上下文数据
-		self.CoreContextSet.Clear()
 
 		if self.endNotify != nil {
 			self.endNotify()

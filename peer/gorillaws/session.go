@@ -180,8 +180,22 @@ func (self *wsSession) sendLoop() {
 
 		// 遍历要发送的数据
 		for _, msg := range writeList {
+			// 检查连接是否已关闭
+			if atomic.LoadInt64(&self.closing) != 0 {
+				break
+			}
+
+			// 检查连接是否仍然有效
+			conn := self.getConn()
+			if conn == nil {
+				// 连接已被关闭，退出循环
+				self.closeConn()
+				break
+			}
 
 			// TODO SendMsgEvent并不是很有意义
+			// 注意：SendMessage 不返回错误，但 OnSendMessage 会返回错误
+			// 如果发送失败，会在下次循环中检测到连接问题
 			self.SendMessage(&cellnet.SendMsgEvent{Ses: self, Msg: msg})
 		}
 

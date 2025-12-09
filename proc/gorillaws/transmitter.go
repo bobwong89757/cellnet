@@ -2,6 +2,7 @@ package gorillaws
 
 import (
 	"encoding/binary"
+
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/codec"
 	"github.com/bobwong89757/cellnet/util"
@@ -99,7 +100,11 @@ func (WSMessageTransmitter) OnSendMessage(ses cellnet.Session, msg interface{}) 
 	binary.LittleEndian.PutUint16(pkt, uint16(msgID))
 	copy(pkt[MsgIDSize:], msgData)
 
-	conn.WriteMessage(websocket.BinaryMessage, pkt)
+	// 返回 WriteMessage 的错误，以便上层能够检测连接问题并关闭连接
+	err := conn.WriteMessage(websocket.BinaryMessage, pkt)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

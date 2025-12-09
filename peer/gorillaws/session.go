@@ -1,12 +1,15 @@
 package gorillaws
 
 import (
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/log"
 	"github.com/bobwong89757/cellnet/peer"
 	"github.com/bobwong89757/cellnet/util"
 	"github.com/gorilla/websocket"
-	"sync"
 )
 
 // wsSession
@@ -18,7 +21,8 @@ type wsSession struct {
 
 	pInterface cellnet.Peer
 
-	conn *websocket.Conn
+	conn      *websocket.Conn
+	connGuard sync.RWMutex
 
 	// 退出同步器
 	exitSync sync.WaitGroup
@@ -27,6 +31,9 @@ type wsSession struct {
 	sendQueue *cellnet.Pipe
 
 	cleanupGuard sync.Mutex
+
+	// closing 关闭标记，使用原子操作，1 表示正在关闭或已关闭，0 表示正常
+	closing int64
 
 	endNotify func()
 }
@@ -37,6 +44,8 @@ func (self *wsSession) Peer() cellnet.Peer {
 
 // 取原始连接
 func (self *wsSession) Raw() interface{} {
+	self.connGuard.RLock()
+	defer self.connGuard.RUnlock()
 	if self.conn == nil {
 		return nil
 	}
@@ -44,7 +53,50 @@ func (self *wsSession) Raw() interface{} {
 	return self.conn
 }
 
+// getConn 获取连接（内部使用）
+func (self *wsSession) getConn() *websocket.Conn {
+	self.connGuard.RLock()
+	defer self.connGuard.RUnlock()
+	return self.conn
+}
+
+// closeConn 关闭连接（内部使用，确保只关闭一次）
+func (self *wsSession) closeConn() {
+	// 先检查关闭标记，如果已经关闭，直接返回
+	if atomic.LoadInt64(&self.closing) != 0 {
+		return
+	}
+
+	// 尝试设置关闭标记，如果已经是关闭状态，直接返回
+	if atomic.SwapInt64(&self.closing, 1) != 0 {
+		return
+	}
+
+	// 获取锁并关闭连接
+	self.connGuard.Lock()
+	defer self.connGuard.Unlock()
+
+	if self.conn != nil {
+		// 设置读写超时为当前时间，确保阻塞的读写操作立即返回
+		// 这样可以释放 gorilla/websocket 内部的 bufio reader/writer
+		self.conn.SetReadDeadline(time.Now())
+		self.conn.SetWriteDeadline(time.Now())
+		// 关闭连接，释放 bufio.NewReaderSize 和 bufio.NewWriterSize 创建的缓冲区
+		self.conn.Close()
+		self.conn = nil
+	}
+}
+
 func (self *wsSession) Close() {
+	// 如果已经关闭，直接返回
+	if atomic.LoadInt64(&self.closing) != 0 {
+		return
+	}
+
+	// 关闭连接，确保 bufio 缓冲区被释放
+	self.closeConn()
+
+	// 通知发送循环退出
 	self.sendQueue.Add(nil)
 }
 
@@ -78,7 +130,7 @@ func (self *wsSession) recvLoop() {
 		capturePanic = i.CaptureIOPanic()
 	}
 
-	for self.conn != nil {
+	for self.getConn() != nil {
 
 		var msg interface{}
 		var err error
@@ -97,6 +149,9 @@ func (self *wsSession) recvLoop() {
 				log.GetLog().Errorf("session closed: %v", err.Error())
 			}
 
+			// 关闭连接，确保 bufio reader 被释放
+			self.closeConn()
+
 			self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self, Msg: &cellnet.SessionClosed{}})
 			break
 		}
@@ -104,7 +159,11 @@ func (self *wsSession) recvLoop() {
 		self.ProcEvent(&cellnet.RecvMsgEvent{Ses: self, Msg: msg})
 	}
 
-	self.Close()
+	// 确保连接被关闭（如果还没有关闭）
+	self.closeConn()
+
+	// 通知发送循环退出
+	self.sendQueue.Add(nil)
 
 	// 通知完成
 	self.exitSync.Done()
@@ -131,11 +190,9 @@ func (self *wsSession) sendLoop() {
 		}
 	}
 
-	// 关闭连接
-	if self.conn != nil {
-		self.conn.Close()
-		self.conn = nil
-	}
+	// 关闭连接，确保 bufio writer 被释放
+	// 使用 closeConn 确保只关闭一次，避免竞态条件
+	self.closeConn()
 
 	// 通知完成
 	self.exitSync.Done()
@@ -143,6 +200,9 @@ func (self *wsSession) sendLoop() {
 
 // 启动会话的各种资源
 func (self *wsSession) Start() {
+
+	// 重置关闭标记
+	atomic.StoreInt64(&self.closing, 0)
 
 	// 将会话添加到管理器
 	self.Peer().(peer.SessionManager).Add(self)

@@ -1,14 +1,15 @@
 package tcp
 
 import (
-	"github.com/bobwong89757/cellnet"
-	"github.com/bobwong89757/cellnet/log"
-	"github.com/bobwong89757/cellnet/peer"
-	"github.com/bobwong89757/cellnet/util"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/bobwong89757/cellnet"
+	"github.com/bobwong89757/cellnet/log"
+	"github.com/bobwong89757/cellnet/peer"
+	"github.com/bobwong89757/cellnet/util"
 )
 
 // tcpSession TCP 会话实现
@@ -184,14 +185,27 @@ func (self *tcpSession) recvLoop() {
 			if !util.IsEOFOrNetReadError(err) {
 
 				var ip string
-				if self.conn != nil {
-					addr := self.conn.RemoteAddr()
+				conn := self.Conn()
+				if conn != nil {
+					addr := conn.RemoteAddr()
 					if addr != nil {
 						ip = addr.String()
 					}
 				}
 
 				log.GetLog().Errorf("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
+			}
+
+			// 确保连接被正确关闭（如果还没有关闭）
+			// 关闭读端并设置超时，确保阻塞的读操作立即返回
+			conn := self.Conn()
+			if conn != nil {
+				if tcpConn, ok := conn.(*net.TCPConn); ok {
+					// 关闭读端，触发接收循环退出
+					tcpConn.CloseRead()
+					// 设置读超时为当前时间，确保阻塞的读操作立即返回
+					tcpConn.SetReadDeadline(time.Now())
+				}
 			}
 
 			// 向发送队列添加 nil，触发发送循环退出

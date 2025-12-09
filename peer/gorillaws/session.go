@@ -1,12 +1,13 @@
 package gorillaws
 
 import (
+	"sync"
+
 	"github.com/bobwong89757/cellnet"
 	"github.com/bobwong89757/cellnet/log"
 	"github.com/bobwong89757/cellnet/peer"
 	"github.com/bobwong89757/cellnet/util"
 	"github.com/gorilla/websocket"
-	"sync"
 )
 
 // wsSession
@@ -156,6 +157,9 @@ func (self *wsSession) Start() {
 
 		// 将会话从管理器移除
 		self.Peer().(peer.SessionManager).Remove(self)
+
+		// 清理上下文数据
+		self.CoreContextSet.Clear()
 
 		if self.endNotify != nil {
 			self.endNotify()

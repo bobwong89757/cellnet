@@ -1,14 +1,15 @@
 package tcp
 
 import (
-	"github.com/bobwong89757/cellnet"
-	"github.com/bobwong89757/cellnet/log"
-	"github.com/bobwong89757/cellnet/peer"
-	"github.com/bobwong89757/cellnet/util"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/bobwong89757/cellnet"
+	"github.com/bobwong89757/cellnet/log"
+	"github.com/bobwong89757/cellnet/peer"
+	"github.com/bobwong89757/cellnet/util"
 )
 
 // tcpSession TCP 会话实现
@@ -308,6 +309,9 @@ func (self *tcpSession) Start() {
 
 		// 将会话从管理器移除
 		self.Peer().(peer.SessionManager).Remove(self)
+
+		// 清理上下文数据
+		self.CoreContextSet.Clear()
 
 		// 调用结束回调
 		if self.endNotify != nil {

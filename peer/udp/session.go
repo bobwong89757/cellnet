@@ -1,11 +1,12 @@
 package udp
 
 import (
-	"github.com/bobwong89757/cellnet"
-	"github.com/bobwong89757/cellnet/peer"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/bobwong89757/cellnet"
+	"github.com/bobwong89757/cellnet/peer"
 )
 
 // DataReader 数据读取接口
@@ -163,6 +164,8 @@ func (self *udpSession) Send(msg interface{}) {
 
 // Close 关闭会话
 // UDP Session 的关闭是空操作（UDP 是无连接协议）
+// 但会清理上下文数据以释放资源
 func (self *udpSession) Close() {
-
+	// 清理上下文数据
+	self.CoreContextSet.Clear()
 }

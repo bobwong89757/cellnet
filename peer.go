@@ -81,6 +81,12 @@ type ContextSet interface {
 	// valuePtr: 指向目标值的指针，类型会自动匹配
 	// 返回是否成功获取并设置
 	FetchContext(key, valuePtr interface{}) bool
+
+	// ClearContext 清理所有上下文数据
+	// 释放所有存储的上下文数据
+	// 建议在业务层处理 SessionClosed 事件时调用，在读取完需要的 context 数据后清理
+	// 这样可以避免竞态条件，确保业务层能够安全地读取 context
+	ClearContext()
 }
 
 // SessionAccessor 提供会话访问接口

@@ -82,6 +82,12 @@ type ContextSet interface {
 	// 返回是否成功获取并设置
 	FetchContext(key, valuePtr interface{}) bool
 
+	// RemoveContext 删除指定 key 的上下文数据
+	// key: 要删除的上下文数据的键
+	// 返回是否成功删除，如果 key 不存在返回 false
+	// 线程安全，支持并发调用
+	RemoveContext(key interface{}) bool
+
 	// ClearContext 清理所有上下文数据
 	// 释放所有存储的上下文数据
 	// 建议在业务层处理 SessionClosed 事件时调用，在读取完需要的 context 数据后清理

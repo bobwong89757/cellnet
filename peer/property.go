@@ -5,21 +5,14 @@ import (
 	"sync"
 )
 
-// ctx 用于存储上下文数据的键值对
-type ctx struct {
-	// key 上下文数据的键，可以是任意类型
-	key interface{}
-
-	// value 上下文数据的值，可以是任意类型
-	value interface{}
-}
-
 // CoreContextSet 提供上下文数据存储和访问的核心实现
 // 用于绑定用户自定义数据，支持任意类型的键值对
 // 线程安全，支持并发访问
+// 使用 map 实现，提供 O(1) 的查找、设置和删除性能
 type CoreContextSet struct {
-	// ctxes 存储上下文数据的列表
-	ctxes []ctx
+	// ctxes 存储上下文数据的 map
+	// 使用 map 而不是 slice，提供更好的性能（O(1) vs O(n)）
+	ctxes map[interface{}]interface{}
 
 	// ctxesGuard 保护 ctxes 的读写锁
 	// 用于并发安全地访问上下文数据
@@ -84,39 +77,61 @@ func (self *CoreContextSet) FetchContext(key, valuePtr interface{}) bool {
 // key: 上下文数据的键
 // 返回上下文数据的值和是否存在
 // 如果键不存在，返回 nil, false
+// 时间复杂度: O(1)
 func (self *CoreContextSet) GetContext(key interface{}) (interface{}, bool) {
 	self.ctxesGuard.RLock()
 	defer self.ctxesGuard.RUnlock()
 
-	// 遍历上下文列表查找匹配的键
-	for _, t := range self.ctxes {
-		if t.key == key {
-			return t.value, true
-		}
+	// 如果 map 未初始化，返回不存在
+	if self.ctxes == nil {
+		return nil, false
 	}
 
-	return nil, false
+	// 直接从 map 中查找
+	value, ok := self.ctxes[key]
+	return value, ok
 }
 
 // SetContext 设置上下文数据
 // key: 上下文数据的键，可以是任意类型
 // v: 上下文数据的值，可以是任意类型
 // 如果键已存在，则更新其值；否则添加新的键值对
+// 时间复杂度: O(1)
 func (self *CoreContextSet) SetContext(key, v interface{}) {
 	self.ctxesGuard.Lock()
 	defer self.ctxesGuard.Unlock()
 
-	// 查找是否已存在相同键的上下文
-	for i, t := range self.ctxes {
-		if t.key == key {
-			// 更新已存在的上下文数据
-			self.ctxes[i] = ctx{key, v}
-			return
-		}
+	// 如果 map 未初始化，先初始化
+	if self.ctxes == nil {
+		self.ctxes = make(map[interface{}]interface{})
 	}
 
-	// 添加新的上下文数据
-	self.ctxes = append(self.ctxes, ctx{key, v})
+	// 直接设置到 map 中（如果 key 已存在会自动更新）
+	self.ctxes[key] = v
+}
+
+// RemoveContext 删除指定 key 的上下文数据
+// key: 要删除的上下文数据的键
+// 返回是否成功删除，如果 key 不存在返回 false
+// 线程安全，支持并发调用
+// 时间复杂度: O(1)
+func (self *CoreContextSet) RemoveContext(key interface{}) bool {
+	self.ctxesGuard.Lock()
+	defer self.ctxesGuard.Unlock()
+
+	// 如果 map 未初始化，返回 false
+	if self.ctxes == nil {
+		return false
+	}
+
+	// 检查 key 是否存在
+	if _, exists := self.ctxes[key]; exists {
+		// 从 map 中删除
+		delete(self.ctxes, key)
+		return true
+	}
+
+	return false
 }
 
 // ClearContext 清理所有上下文数据
@@ -124,11 +139,12 @@ func (self *CoreContextSet) SetContext(key, v interface{}) {
 // 建议在业务层处理 SessionClosed 事件时调用，在读取完需要的 context 数据后清理
 // 这样可以避免竞态条件，确保业务层能够安全地读取 context
 // 线程安全，支持并发调用
+// 时间复杂度: O(1)
 func (self *CoreContextSet) ClearContext() {
 	self.ctxesGuard.Lock()
 	defer self.ctxesGuard.Unlock()
 
-	// 清空上下文数据列表
+	// 清空 map（设置为 nil，让 GC 回收）
 	self.ctxes = nil
 }
 
@@ -136,16 +152,22 @@ func (self *CoreContextSet) ClearContext() {
 // 返回一个包含所有 key-value 对的 map
 // 线程安全，返回的是数据的快照，不会影响原始数据
 // 用于调试和打印 context 信息
+// 时间复杂度: O(n)，n 为 context 数量
 func (self *CoreContextSet) GetAllContext() map[interface{}]interface{} {
 	self.ctxesGuard.RLock()
 	defer self.ctxesGuard.RUnlock()
 
-	// 创建 map 存储所有上下文数据
+	// 如果 map 未初始化，返回空的 map
+	if self.ctxes == nil {
+		return make(map[interface{}]interface{})
+	}
+
+	// 创建 map 存储所有上下文数据的副本
 	result := make(map[interface{}]interface{}, len(self.ctxes))
 
 	// 复制所有上下文数据
-	for _, t := range self.ctxes {
-		result[t.key] = t.value
+	for key, value := range self.ctxes {
+		result[key] = value
 	}
 
 	return result

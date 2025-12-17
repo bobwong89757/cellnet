@@ -118,3 +118,16 @@ func (self *CoreContextSet) SetContext(key, v interface{}) {
 	// 添加新的上下文数据
 	self.ctxes = append(self.ctxes, ctx{key, v})
 }
+
+// ClearContext 清理所有上下文数据
+// 释放所有存储的上下文数据
+// 建议在业务层处理 SessionClosed 事件时调用，在读取完需要的 context 数据后清理
+// 这样可以避免竞态条件，确保业务层能够安全地读取 context
+// 线程安全，支持并发调用
+func (self *CoreContextSet) ClearContext() {
+	self.ctxesGuard.Lock()
+	defer self.ctxesGuard.Unlock()
+
+	// 清空上下文数据列表
+	self.ctxes = nil
+}

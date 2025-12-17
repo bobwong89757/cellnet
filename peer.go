@@ -87,6 +87,12 @@ type ContextSet interface {
 	// 建议在业务层处理 SessionClosed 事件时调用，在读取完需要的 context 数据后清理
 	// 这样可以避免竞态条件，确保业务层能够安全地读取 context
 	ClearContext()
+
+	// GetAllContext 获取所有上下文数据的副本
+	// 返回一个包含所有 key-value 对的 map
+	// 线程安全，返回的是数据的快照，不会影响原始数据
+	// 用于调试和打印 context 信息
+	GetAllContext() map[interface{}]interface{}
 }
 
 // SessionAccessor 提供会话访问接口

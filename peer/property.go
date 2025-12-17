@@ -131,3 +131,22 @@ func (self *CoreContextSet) ClearContext() {
 	// 清空上下文数据列表
 	self.ctxes = nil
 }
+
+// GetAllContext 获取所有上下文数据的副本
+// 返回一个包含所有 key-value 对的 map
+// 线程安全，返回的是数据的快照，不会影响原始数据
+// 用于调试和打印 context 信息
+func (self *CoreContextSet) GetAllContext() map[interface{}]interface{} {
+	self.ctxesGuard.RLock()
+	defer self.ctxesGuard.RUnlock()
+
+	// 创建 map 存储所有上下文数据
+	result := make(map[interface{}]interface{}, len(self.ctxes))
+
+	// 复制所有上下文数据
+	for _, t := range self.ctxes {
+		result[t.key] = t.value
+	}
+
+	return result
+}

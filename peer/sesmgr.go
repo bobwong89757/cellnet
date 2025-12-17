@@ -1,10 +1,10 @@
 package peer
 
 import (
-	"github.com/bobwong89757/cellnet"
-	"github.com/bobwong89757/cellnet/log"
 	"sync"
 	"sync/atomic"
+
+	"github.com/bobwong89757/cellnet"
 )
 
 // SessionManager 定义完整功能的会话管理接口
@@ -72,7 +72,6 @@ func (self *CoreSessionManager) Add(ses cellnet.Session) {
 	ses.(interface {
 		SetID(int64)
 	}).SetID(id)
-	log.GetLog().Warnf("添加%d到sessMgr", id)
 	// 存储会话到映射表
 	self.sesById.Store(id, ses)
 }

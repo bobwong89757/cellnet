@@ -143,10 +143,8 @@ func (self *wsSession) recvLoop() {
 
 		if err != nil {
 
-			log.GetLog().Debugf(err.Error())
-
 			if !util.IsEOFOrNetReadError(err) {
-				log.GetLog().Errorf("session closed: %v", err.Error())
+				log.GetLog().Debugf("session closed: %v", err.Error())
 			}
 
 			// 关闭连接，确保 bufio reader 被释放

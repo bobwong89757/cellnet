@@ -193,7 +193,7 @@ func (self *tcpSession) recvLoop() {
 					}
 				}
 
-				log.GetLog().Errorf("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
+				log.GetLog().Debugf("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
 			}
 
 			// 确保连接被正确关闭（如果还没有关闭）

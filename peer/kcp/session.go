@@ -243,7 +243,7 @@ func (self *KcpSession) recvLoop() {
 						ip = addr.String()
 					}
 				}
-				log.GetLog().Errorf("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
+				log.GetLog().Debugf("session closed, sesid: %d, err: %s ip: %s", self.ID(), err, ip)
 			}
 
 			self.sendQueue.Add(nil)
